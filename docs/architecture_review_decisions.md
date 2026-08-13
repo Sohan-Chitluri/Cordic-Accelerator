@@ -29,6 +29,7 @@
 | 8 | **Barrel shifter → Fixed shift per stage** | APPROVED | Each stage shifts by constant `i`. Hardwire shift amount per stage — eliminates barrel shifter from critical path. Stage = MUX + adder only. |
 | 9 | **4 agents → 3 agents (V1)** | APPROVED | Reduced module count enables 3 parallel agents + Lead. Agent-D owns pipeline integration (was Agent-D + Agent-E). |
 | 10 | **Single shared package (`cordic_pkg.sv`)** | APPROVED | Replaced 3 packages (`arithmetic_pkg`, `top_pkg`, `iterator_pkg`) with one. Single source of truth, no package dependency cycles, Lead-owned. |
+| 11 | **Language: SystemVerilog 2012 (ASIC-safe subset)** | APPROVED — 2026-08-13 | SV confirmed after interim Verilog-only constraint was lifted. Subset: `logic`, `always_ff`/`always_comb`, `package`/`typedef`, `$clog2`, SVA assertions. `interface`, `class`, and dynamic constructs excluded from synthesized RTL (limited Yosys/Genus support). Yosys 0.13+ and Verilator 5+ both handle this subset cleanly. |
 
 ---
 

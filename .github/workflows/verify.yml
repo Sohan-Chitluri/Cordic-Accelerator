@@ -1,0 +1,180 @@
+name: CORDIC Accelerator CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  VERILATOR_VERSION: 5.028
+
+jobs:
+  lint:
+    name: Verilator Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+
+      - name: Run lint
+        run: make lint
+
+      - name: Upload lint log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-log
+          path: obj_dir/
+
+  build:
+    name: Build Simulation
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator g++ make
+
+      - name: Build simulation
+        run: make sim
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-binary
+          path: output/Vcordic_top
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator g++ make
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: output/
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator g++ make
+
+      - name: Run with coverage
+        run: make coverage
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: output/coverage.dat
+
+  golden-model:
+    name: Golden Model Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run golden model tests
+        run: python3 tb/golden_model.py
+
+      - name: Generate test vectors
+        run: python3 tb/golden_model.py gen 1000 tb/test_vectors/ci_vectors.json
+
+      - name: Upload test vectors
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-vectors
+          path: tb/test_vectors/
+
+  # Synthesis (requires yosys - optional)
+  # synth:
+  #   name: Synthesis
+  #   runs-on: ubuntu-latest
+  #   needs: lint
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     - name: Install Yosys
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y yosys
+  #     - name: Run synthesis
+  #       run: make synth
+
+  # STA (requires OpenSTA - optional)
+  # sta:
+  #   name: Static Timing Analysis
+  #   runs-on: ubuntu-latest
+  #   needs: synth
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     - name: Install OpenSTA
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y opensta
+  #     - name: Run STA
+  #       run: make sta
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [lint, build, test, golden-model]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create tag
+        run: |
+          VERSION=$(date +'v%Y.%m.%d-%H%M')
+          git tag $VERSION
+          git push origin $VERSION
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.create-tag.outputs.VERSION }}
+          name: Release ${{ steps.create-tag.outputs.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

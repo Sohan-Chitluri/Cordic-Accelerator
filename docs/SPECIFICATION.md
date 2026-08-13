@@ -23,7 +23,7 @@
 
 | ID | Requirement | Description |
 |----|-------------|-------------|
-| FR-01 | **Rotation Mode** | Compute `x_out = K × (x_in cos(z_in) - y_in sin(z_in))`, `y_out = K × (x_in sin(z_in) + y_in cos(z_in))`, `z_out ≈ 0` for input vector `(x_in, y_in)` and angle `z_in`. |
+| FR-01 | **Rotation Mode** | Compute `x_out = K × (x_in cos(z_in) - y_in sin(z_in))`, `y_out = K × (x_in sin(z_in) + y_in cos(z_in))`, `z_out ≈ 0` for input vector `(x_in, y_in)` and angle `z_in`. **Input angle range restricted to approximately ±1.74 rad (~±99.5°)** — the standard CORDIC convergence zone for 8 iterations. Inputs outside this range produce undefined results. Full ±π range via quadrant folding is deferred to V2. |
 | FR-02 | **Parameterized Precision** | Data width `WIDTH` (default 16), fractional bits `FRACT_W` (default 12), iteration count `ITERATIONS` (default 8) all parameterizable at elaboration. |
 | FR-03 | **Pipelined Execution** | One input vector accepted per cycle after pipeline fill; latency = `ITERATIONS + 1` cycles; throughput = 1 vector/cycle. |
 | FR-04 | **Configurable Saturation** | Saturating or wrap-around arithmetic selectable via configuration. |
@@ -37,7 +37,7 @@
 
 | ID | Requirement | Target |
 |----|-------------|--------|
-| NFR-01 | **Synthesizability** | Pure SystemVerilog 2017; no non-synthesizable constructs in RTL. |
+| NFR-01 | **Synthesizability** | SystemVerilog (IEEE 1800-2012) ASIC-safe subset: `logic`, `always_ff`/`always_comb`, `package`, `typedef`, `$clog2`, SVA. No `interface`, `class`, or dynamic constructs in synthesized RTL. |
 | NFR-02 | **Timing Closure** | Zero setup/hold violations at target frequency (measured post-synthesis). |
 | NFR-03 | **Area Budget** | < 50k gate equivalents (post-synthesis estimate). |
 | NFR-04 | **Power Intent** | Single voltage domain; clock gating enabled on pipeline registers (UPF V2.0). |
@@ -54,7 +54,7 @@
 
 | Feature | Description |
 |---------|-------------|
-| **Rotation Mode** | Sine/cosine generation, vector rotation by arbitrary angle. |
+| **Rotation Mode** | Sine/cosine generation, vector rotation by angles in ≈ [−1.74, +1.74] rad (~±99.5°). No quadrant folding in V1. |
 | **Parameterized Datapath** | `WIDTH`, `FRACT_W`, `ITERATIONS` as elaboration-time parameters. |
 | **Pipelined Datapath** | `ITERATIONS` stages + input/output registers. |
 | **Fixed Per-Stage Shifts** | Shift amount hardwired per stage (eliminates barrel shifter). |
@@ -69,6 +69,7 @@
 
 | Feature | Deferred To | Reason |
 |---------|-------------|--------|
+| **Full ±π Angle Range** | V2.0 | Requires quadrant folding pre-stage (detect quadrant, fold z into ±π/2, negate x when needed). Adds 1 cycle pre-processing. |
 | **Vectoring Mode** (atan2, magnitude) | V2.0 | Adds mode MUX in critical path; separate convergence behavior. |
 | **Hyperbolic Mode** (sinh, cosh, sqrt, ln, exp) | V2.0 | Requires repeated iterations (4, 13); different datapath. |
 | **Runtime K-Factor Multiplication** | V2.1 | V1 uses LUT prescaling; multiplier adds latency/area. |
@@ -151,7 +152,7 @@ Cycle N+1:  Output register
 
 | Parameter | Requirement | Verification Method |
 |-----------|-------------|---------------------|
-| **Angle Error (Rotation)** | ≤ 0.1° max | Co-simulation vs Python golden model (10k random vectors) |
+| **Angle Error (Rotation)** | ≤ 0.1° max for `|z_in| ≤ 1.74 rad` | Co-simulation vs Python golden model (10k random vectors within convergence zone) |
 | **Magnitude Preservation** | `|x_out|² + |y_out|² ≈ K²(|x_in|² + |y_in|²)` | Formal invariant: x²+y² preserved within rounding |
 | **K-Factor Error** | < 0.1% | LUT prescaling verified for all input combinations |
 | **Saturation Correctness** | No wraparound when enabled | Directed tests at min/max boundaries |

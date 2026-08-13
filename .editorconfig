@@ -1,0 +1,52 @@
+#==============================================================================
+# .editorconfig for CORDIC Accelerator ASIC Project
+#==============================================================================
+
+root = true
+
+# All files
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# SystemVerilog files
+[*.sv]
+indent_style = space
+indent_size = 2
+
+# Tcl scripts
+[*.tcl]
+indent_style = space
+indent_size = 2
+
+# Python files
+[*.py]
+indent_style = space
+indent_size = 4
+
+# Makefiles
+[Makefile]
+indent_style = tab
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML
+[*.yml, *.yaml]
+indent_style = space
+indent_size = 2
+
+# JSON
+[*.json]
+indent_style = space
+indent_size = 2
+
+# C/C++ simulation files
+[*.cpp, *.h, *.hpp]
+indent_style = space
+indent_size = 2

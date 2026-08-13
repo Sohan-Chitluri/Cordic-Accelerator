@@ -1,0 +1,64 @@
+#==============================================================================
+# .gitignore for CORDIC Accelerator ASIC Project
+#==============================================================================
+
+# Verilator build artifacts
+obj_dir/
+*.vcd
+*.fst
+*.vpd
+
+# Coverage
+coverage.dat
+*.annotated
+coverage/
+
+# Yosys synthesis
+*.ys
+output/
+*.rpt
+*.log
+
+# OpenSTA
+*.sta
+sta_*.rpt
+
+# SymbiYosys formal
+*.sby
+formal/
+*sby*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+
+# Test vectors (large files - use Git LFS if needed)
+tb/test_vectors/*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+*.egg-info
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
