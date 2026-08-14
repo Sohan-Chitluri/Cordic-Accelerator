@@ -1,96 +1,95 @@
-# ADR-0005: LUT-Based K-Factor Prescaling
+# ADR-0005: Shift-Add Constant K-Factor Prescaling
 
-**Status:** ACCEPTED  
-**Date:** 2026-07-22  
+**Status:** SUPERSEDED (was: LUT-Based K-Factor Prescaling, ACCEPTED 2026-07-22)  
+**Revised:** 2026-08-14  
 **Authors:** Principal ASIC Architect, Technical Lead  
-**Reviewers:** All Agents  
 
 ---
 
 ## Context
 
-CORDIC rotation has inherent gain K = Π cos(atan(2⁻ⁱ)) ≈ 0.607252935. Traditional implementations multiply outputs by K at pipeline end, requiring a multiplier.
+CORDIC rotation has inherent gain K = Π cos(atan(2⁻ⁱ)) ≈ 0.607252935 (8 iterations). Inputs must
+be pre-multiplied by K before entering the CORDIC stage chain so that the output magnitude is correct.
+
+The original design used a 16-entry LUT indexed by the 4 MSBs of the input
+(`k_lut_idx = x_in[15:12]`). This was found to be architecturally incorrect: indexing only 4 MSBs
+quantizes the input to 16 levels and **discards all 12 fractional bits**. The golden model's own
+code flagged this as a "known design issue." The claimed ±0.6% error was for the LUT step size,
+not the true precision loss (which destroys sub-integer information entirely).
 
 ## Decision
 
-**V1 uses LUT-based prescaling at pipeline input.** Inputs x_in, y_in are pre-multiplied by K via 16-entry combinational LUT before entering CORDIC stages.
+**V1 uses a shift-add constant multiplier for K-factor prescaling.** The correction factor is
+K ≈ 2488/4096 (0.028% vs. true K), realized as:
+
+```
+v × 2488 = (v << 11) + (v << 9) − (v << 6) − (v << 3)
+k        = round(v × 2488 / 4096) = (v × 2488 + 2048) >>> 12
+```
+
+This is purely combinational (0-cycle latency), requires no multiplier (4 shifts + 3 add/subs,
+consistent with ADR-0002), and preserves full input precision.
 
 ## Alternatives Considered
 
-| Alternative | Implementation | Latency | Area | Accuracy | Decision |
-|-------------|---------------|---------|------|----------|----------|
-| **Post-multiply (multiplier)** | Shift-add multiplier at output | 2 cycles | ~2,500 GE | Bit-exact | REJECTED |
-| **Runtime K-multiply** | Parameterized multiplier | 2 cycles | +multiplier | Bit-exact | REJECTED |
-| **LUT prescaling (input)** | 16-entry LUT on 4 MSBs | **0 cycles** | **~200 GE** | ±0.6% | **ACCEPTED** |
-| **No compensation** | User handles K externally | 0 cycles | 0 | User-dependent | REJECTED |
-| **Pre-scaled constants** | K baked into angle LUT | 0 cycles | 0 | Bit-exact for fixed N | REJECTED (inflexible) |
+| Alternative | Implementation | Area | Accuracy | Decision |
+|-------------|----------------|------|----------|----------|
+| **4-MSB LUT (original)** | 16-entry ROM on input[15:12] | ~200 GE | Destroys fractional bits | **REJECTED** |
+| **Shift-add constant** | 4 shifts + 3 add/subs | ~150 GE | 0.028% vs. true K | **ACCEPTED** |
+| **Post-multiply (multiplier)** | Shift-add multiplier at output | ~2,500 GE | Bit-exact | REJECTED (ADR-0002) |
+| **No compensation** | User handles K externally | 0 | User-dependent | REJECTED |
 
-## LUT Design Details
+## Implementation Details
 
 | Aspect | Specification |
 |--------|---------------|
-| **Input** | 4 MSBs of x_in / y_in (k_lut_idx = x_in[15:12]) |
-| **Entries** | 16 (covers range [-8, 8) in Q12.3) |
-| **Output** | K × (index_center_value) |
+| **K approximation** | 2488/4096 = 0.607421875 (0.028% vs. true K=0.607252935) |
+| **CSD decomposition** | 2488 = 2¹¹ + 2⁹ − 2⁶ − 2³ |
+| **Accumulator width** | WIDTH + FRACT_W + 2 = 30 bits (prevents intermediate overflow) |
+| **Rounding** | Round-to-nearest: bias (+2048) added before arithmetic right shift |
 | **Latency** | 0 cycles (purely combinational) |
-| **Synthesis** | `(* rom_style = "distributed" *)` → LUT6s |
-| **Max index error** | K × (step/2) = 0.607 × 0.25 ≈ 0.15 (Q12.3) = 0.6% |
+| **Synthesis** | Adder tree, no RAM/ROM inference risk |
+| **Input precision** | Full WIDTH-bit precision preserved (no quantization) |
+
+```systemverilog
+function automatic cordic_data_t k_prescale(input cordic_data_t v);
+  logic signed [ACC_W-1:0] ext, acc;
+  ext = ACC_W'(v);
+  acc = (ext <<< 11) + (ext <<< 9) - (ext <<< 6) - (ext <<< 3);
+  acc = acc + (1 <<< (FRACT_W-1));   // round-to-nearest
+  acc = acc >>> FRACT_W;
+  return cordic_data_t'(acc[WIDTH-1:0]);
+endfunction
+```
+
+Golden model match: `k_prescale(v) = (v * 2488 + 2048) >> 12` (bit-exact, verified by
+`cordic_lut_tb.sv` sweeping all 65,536 input values).
 
 ## Consequences
 
 ### Positive
-- **Zero-cycle compensation** — no pipeline bubbles
-- **No multiplier RTL** — consistent with ADR-0002
-- **Trivial verification** — table compare vs golden
-- **Deterministic timing** — combinational LUT, no RAM inference risk
-- **Area minimal** — 16 LUT6s ≈ 200 GE
+- **Full input precision** — all 12 fractional bits preserved
+- **No multiplier** — ADR-0002 preserved; synthesizes to adder tree
+- **0-cycle latency** — purely combinational, fits pipeline input stage
+- **Bit-exact with golden model** — RTL and Python reference agree on every value
+- **Simpler interface** — ports `k_lut_idx_x/y [3:0]` removed; full-width `x_in/y_in` used directly
+- **Verified** — full sweep by `cordic_lut_tb.sv`
 
 ### Negative
-- **Indexing granularity** — 4 MSBs only, step = 0.5 in Q12.3
-- **K-error ≤ 0.6%** — acceptable for 16-bit (target < 0.5% magnitude error)
-- **Fixed iteration count** — LUT pre-computed for ITERATIONS=8
-- **Not bit-exact** — V2.1 adds runtime multiply for exactness
+- **0.028% K-error** — acceptable per SPECIFICATION NFR-05 (< 0.5% magnitude error)
+- **Adder depth ~4** — slightly deeper than LUT, but well within timing for target frequency
 
 ## Error Budget Analysis
 
-| Error Source | Magnitude | Contribution |
-|--------------|-----------|--------------|
-| LUT index quantization | ≤ 0.5 LSB of input | ±0.6% K-error |
-| CORDIC finite iterations (8) | ~2⁻⁹ rad | 0.11° angle |
-| Fixed-point rounding | ~8 × 0.5 LSB | 0.1% magnitude |
-| **Total magnitude error** | | **< 0.5%** (meets spec) |
-| **Total angle error** | | **< 0.15°** (meets spec) |
-
-## V2.1 Migration
-
-V2.1 adds runtime K-multiplication for dynamic iterations:
-
-```systemverilog
-// V2.1 cordic_lut.sv extension
-module cordic_lut #(
-  parameter int ITERATIONS = 8
-) (
-  // ... existing ports ...
-  input  logic                    use_runtime_k,  // V2: 1=multiply, 0=LUT
-  input  logic signed [WIDTH-1:0] k_factor_fixed, // V2: runtime K value
-  output logic signed [WIDTH-1:0] k_prescale_x,
-  output logic signed [WIDTH-1:0] k_prescale_y
-);
-// If use_runtime_k: k_prescale = shift_add_mul(x_in, k_factor_fixed)
-// Else: k_prescale = LUT[x_in[15:12]]
-endmodule
-```
-
-**V1 RTL unchanged** — V2 adds mux and multiplier path.
-
-## Risk Assessment
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| LUT inferred as RAM | Medium | Adds 1-cycle latency | `(* rom_style="distributed" *)` + `always_comb` |
-| K-error too large | Low | Fails accuracy spec | Verified: < 0.5% total magnitude error |
-| User needs exact K | Medium | Deferred to V2.1 | Documented; V2.1 adds multiplier |
+| Error Source | Magnitude |
+|--------------|-----------|
+| K approximation (2488 vs. 2488.02…) | 0.028% |
+| CORDIC 8-iteration truncation | ~2⁻⁹ rad ≈ 0.11° |
+| Round-to-nearest (per stage) | ≤ 0.5 LSB |
+| **Total magnitude error** | **< 0.1%** (well within spec) |
 
 ---
 
-**Sign-off:** Principal Architect ✅ | Technical Lead ✅ | Agent-A ⏳ | Agent-B ⏳ | Agent-C ⏳ | Agent-D ⏳
+**Revision note:** Original 4-MSB LUT approach (ACCEPTED 2026-07-22) was found to destroy
+fractional-bit precision. Replaced with shift-add constant multiplier (2026-08-14).
+ADR-0002 (no multiplier in synthesized datapath) is preserved.

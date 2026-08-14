@@ -1,141 +1,148 @@
+`timescale 1ns/1ps
 //==============================================================================
-// Testbench: cordic_top_tb.v
-// Description: Top-level regression testbench for cordic_top module
-// Owner: Integration Agent
-// Dependencies: cordic_top.v, cordic_pkg.v
+// Testbench: cordic_top_tb
+// Description: Self-checking integration testbench for cordic_top (top-level
+//              passthrough to cordic_pipeline). Verifies the top-level port
+//              routing is correct via one 45° vector and a reset check.
+// Owner: Verification Agent
 // Wave: 4
 //==============================================================================
 
 module cordic_top_tb;
+  import cordic_pkg::*;
 
-  `include "cordic_pkg.v"
+  // 45° vector — same expected values as cordic_pipeline_tb
+  localparam cordic_data_t V1_X   = 16'sd4096, V1_Y = 16'sd0,    V1_Z = 16'sd3217;
+  localparam cordic_data_t V1_EX  = 16'sd2918, V1_EY = 16'sd2876, V1_EZ = 16'sd16;
+  localparam logic         V1_EOVF = 1'b0;
 
-  // Parameters
-  parameter integer WIDTH       = 16;
-  parameter integer FRACT_W     = 12;
-  parameter integer ITERATIONS  = 8;
+  localparam int VALID_DEPTH = ITERATIONS + 2;
+  localparam int TIMEOUT     = VALID_DEPTH + 6;
 
-  // Signals
-  reg                       clk;
-  reg                       rst_n;
-  reg  signed [WIDTH-1:0]   x_in, y_in, z_in;
-  reg                       valid_in;
-  wire                      ready_out;
-  reg  [3:0]                cfg_iterations;
-  reg                       cfg_saturate;
-  reg                       config_valid;
-  wire                      config_ready;
-  wire signed [WIDTH-1:0]   x_out, y_out, z_out;
-  wire                      valid_out;
-  reg                       ready_in;
-  wire                      overflow;
-  wire                      irq;
+  logic         clk, rst_n;
+  cordic_data_t x_in, y_in, z_in;
+  logic         valid_in, ready_out;
+  logic [3:0]   cfg_iterations;
+  logic         cfg_saturate, config_valid, config_ready;
+  cordic_data_t x_out, y_out, z_out;
+  logic         valid_out, ready_in, overflow, irq;
+  int           errors;
 
-  // Clock generation
-  initial clk = 0;
-  always #5 clk = ~clk;
-
-  // DUT instance
-  cordic_top #(
-    .WIDTH(WIDTH),
-    .FRACT_W(FRACT_W),
-    .ITERATIONS(ITERATIONS)
-  ) dut (
-    .clk             (clk),
-    .rst_n           (rst_n),
-    .x_in            (x_in),
-    .y_in            (y_in),
-    .z_in            (z_in),
-    .valid_in        (valid_in),
-    .ready_out       (ready_out),
-    .cfg_iterations  (cfg_iterations),
-    .cfg_saturate    (cfg_saturate),
-    .config_valid    (config_valid),
-    .config_ready    (config_ready),
-    .x_out           (x_out),
-    .y_out           (y_out),
-    .z_out           (z_out),
-    .valid_out       (valid_out),
-    .ready_in        (ready_in),
-    .overflow        (overflow),
-    .irq             (irq)
+  cordic_top dut (
+    .clk           (clk),
+    .rst_n         (rst_n),
+    .x_in          (x_in),
+    .y_in          (y_in),
+    .z_in          (z_in),
+    .valid_in      (valid_in),
+    .ready_out     (ready_out),
+    .cfg_iterations(cfg_iterations),
+    .cfg_saturate  (cfg_saturate),
+    .config_valid  (config_valid),
+    .config_ready  (config_ready),
+    .x_out         (x_out),
+    .y_out         (y_out),
+    .z_out         (z_out),
+    .valid_out     (valid_out),
+    .ready_in      (ready_in),
+    .overflow      (overflow),
+    .irq           (irq)
   );
 
-  // ---------------------------------------------------------------------------
-  // TEST SEQUENCE
-  // ---------------------------------------------------------------------------
+  initial clk = 1'b0;
+  always #5 clk = ~clk;
+
+  task automatic wait_output(input string label);
+    for (int i = 0; i < TIMEOUT; i++) begin
+      @(posedge clk);
+      if (valid_out) return;
+    end
+    $error("[cordic_top] %s: timeout — valid_out not seen within %0d cycles",
+           label, TIMEOUT);
+    errors++;
+  endtask
+
+  task automatic chk(
+    input string     label,
+    input cordic_data_t ex, ey, ez,
+    input logic         eovf
+  );
+    if (x_out !== ex) begin
+      $error("[cordic_top] %s: x_out=%0d exp=%0d", label, x_out, ex); errors++;
+    end
+    if (y_out !== ey) begin
+      $error("[cordic_top] %s: y_out=%0d exp=%0d", label, y_out, ey); errors++;
+    end
+    if (z_out !== ez) begin
+      $error("[cordic_top] %s: z_out=%0d exp=%0d", label, z_out, ez); errors++;
+    end
+    if (overflow !== eovf) begin
+      $error("[cordic_top] %s: overflow=%0b exp=%0b", label, overflow, eovf); errors++;
+    end
+  endtask
+
   initial begin
-    $display("=== cordic_top Regression Testbench ===");
-    
-    // Initialize
-    rst_n = 0;
-    valid_in = 0;
-    ready_in = 1;
-    config_valid = 0;
-    cfg_iterations = ITERATIONS;
-    cfg_saturate = 1;
-    x_in = 0; y_in = 0; z_in = 0;
-    
-    // Reset sequence
-    repeat (3) @(posedge clk);
-    rst_n = 1;
-    repeat (2) @(posedge clk);
-    
-    // Test 1: Basic rotation at 45 degrees
-    $display("\n--- TEST 1: Rotation 45 deg ---");
-    cfg_iterations = 8;
-    cfg_saturate = 1;
-    config_valid = 1;
-    @(posedge clk);
-    config_valid = 0;
-    @(posedge clk);
-    
-    x_in = 16'sd2488;  // 1/K in Q12.3
-    y_in = 16'sd0;
-    z_in = 16'sd3217;  // 45 deg
-    valid_in = 1;
-    @(posedge clk);
-    valid_in = 0;
-    
-    repeat (ITERATIONS + 5) @(posedge clk);
-    
-    $display("TEST 1: x_out=%d, y_out=%d, z_out=%d, valid=%b, ovf=%b", 
-             x_out, y_out, z_out, valid_out, overflow);
-    
-    // Test 2: Rotation at 90 degrees
-    $display("\n--- TEST 2: Rotation 90 deg ---");
-    x_in = 16'sd2488;
-    y_in = 16'sd0;
-    z_in = 16'sd6433;  // 90 deg
-    valid_in = 1;
-    @(posedge clk);
-    valid_in = 0;
-    repeat (ITERATIONS + 5) @(posedge clk);
-    
-    $display("TEST 2: x_out=%d, y_out=%d, z_out=%d, valid=%b, ovf=%b", 
-             x_out, y_out, z_out, valid_out, overflow);
-    
-    // Test 3: Config change
-    $display("\n--- TEST 3: Config change (4 iter, wrap mode) ---");
-    cfg_iterations = 4;
-    cfg_saturate = 0;
-    config_valid = 1;
-    @(posedge clk);
-    config_valid = 0;
-    @(posedge clk);
-    
-    x_in = 16'sd2488;
-    y_in = 16'sd0;
-    z_in = 16'sd3217;
-    valid_in = 1;
-    @(posedge clk);
-    valid_in = 0;
-    repeat (6) @(posedge clk);
-    
-    $display("TEST 3: x_out=%d, y_out=%d, z_out=%d, valid=%b, ovf=%b", 
-             x_out, y_out, z_out, valid_out, overflow);
-    
-    $display("\n=== All Top-Level Tests Complete ===");
+    errors = 0;
+    x_in = '0; y_in = '0; z_in = '0;
+    valid_in = 1'b0; ready_in = 1'b1;
+    cfg_saturate = 1'b1; cfg_iterations = 4'(ITERATIONS); config_valid = 1'b0;
+
+    // ---- Reset ----
+    rst_n = 1'b0;
+    repeat(3) @(posedge clk);
+    @(negedge clk); rst_n = 1'b1;
+    repeat(2) @(posedge clk);
+    if (valid_out !== 1'b0 || overflow !== 1'b0) begin
+      $error("[cordic_top] T0:reset: outputs not cleared"); errors++;
+    end
+
+    // ---- Test 1: 45° rotation — end-to-end through cordic_top ----
+    // Config
+    @(negedge clk);
+    cfg_saturate = 1'b1; cfg_iterations = 4'(ITERATIONS); config_valid = 1'b1;
+    @(posedge clk); @(negedge clk);
+    config_valid = 1'b0;
+
+    // Data
+    @(negedge clk);
+    x_in = V1_X; y_in = V1_Y; z_in = V1_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+
+    wait_output("T1:45deg");
+    chk("T1:45deg", V1_EX, V1_EY, V1_EZ, V1_EOVF);
+
+    // ---- Test 2: Reset clears in-flight data ----
+    @(negedge clk);
+    x_in = V1_X; y_in = V1_Y; z_in = V1_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+    repeat(4) @(posedge clk);
+    @(negedge clk); rst_n = 1'b0;
+    repeat(3) @(posedge clk);
+    if (valid_out !== 1'b0) begin
+      $error("[cordic_top] T2:mid_reset: valid_out not cleared by reset"); errors++;
+    end
+    @(negedge clk); rst_n = 1'b1;
+    repeat(2) @(posedge clk);
+
+    // ---- Test 3: Second pass after reset — pipeline recovers ----
+    @(negedge clk);
+    cfg_saturate = 1'b1; config_valid = 1'b1;
+    @(posedge clk); @(negedge clk);
+    config_valid = 1'b0;
+
+    @(negedge clk);
+    x_in = V1_X; y_in = V1_Y; z_in = V1_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+
+    wait_output("T3:post_reset");
+    chk("T3:post_reset", V1_EX, V1_EY, V1_EZ, V1_EOVF);
+
+    if (errors != 0) $fatal(1, "FAIL: cordic_top — %0d error(s)", errors);
+    else             $display("PASS: cordic_top");
+
     $finish;
   end
 

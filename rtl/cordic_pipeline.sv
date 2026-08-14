@@ -63,14 +63,13 @@ module cordic_pipeline
   end
 
   // ---------------------------------------------------------------------------
-  // K-PRESCALE LUT (input stage only)
-  // Separate indices for x and y — fixes pre-existing same-index bug.
+  // K-PRESCALE (input stage only) — shift-add constant multiply by K
   // ---------------------------------------------------------------------------
   cordic_data_t lut_k_x, lut_k_y;
 
   cordic_lut #(.WIDTH(WIDTH), .FRACT_W(FRACT_W), .ITERATIONS(ITERATIONS)) lut_inst (
-    .k_lut_idx_x (x_in[WIDTH-1:WIDTH-4]),
-    .k_lut_idx_y (y_in[WIDTH-1:WIDTH-4]),
+    .x_in        (x_in),
+    .y_in        (y_in),
     .k_prescale_x(lut_k_x),
     .k_prescale_y(lut_k_y)
   );

@@ -1,12 +1,21 @@
 //==============================================================================
 // Module: cordic_lut
-// Description: K-factor prescaling LUT for CORDIC input stage.
-//              16-entry LUT indexed by 4 MSBs of x_in and y_in independently.
-//              Each cordic_stage embeds its own angle constant (from cordic_pkg
-//              ATAN_LUT) via STAGE_ANGLE localparam — no shared angle LUT needed.
+// Description: K-factor prescaler for the CORDIC input stage.
 //
-//              Zero-cycle latency; always_comb + unique case → distributed LUT
-//              inference guaranteed (no RAM risk).
+//              Multiplies x_in and y_in by the CORDIC gain reciprocal
+//              K = 0.607252935 using a fixed shift-add network (NO multiplier,
+//              per ADR-0002). K is realized exactly as the Q12 constant
+//              K_FACTOR = 2488/4096 = 0.607421875 (0.028% vs. true K):
+//
+//                v * 2488 = (v<<11) + (v<<9) - (v<<6) - (v<<3)
+//                k        = round( v*2488 / 4096 ) = (v*2488 + 2048) >>> 12
+//
+//              Purely combinational (0-cycle). Synthesizes to a small adder
+//              tree — no RAM/ROM inference. Full input precision preserved
+//              (supersedes the old 4-MSB LUT which quantized to 16 levels).
+//
+//              Each cordic_stage embeds its own atan(2^-i) angle constant, so
+//              no shared angle LUT is required here.
 //
 // Owner: Datapath RTL Agent
 // Parameters: WIDTH, FRACT_W, ITERATIONS
@@ -21,44 +30,31 @@ module cordic_lut
   parameter int FRACT_W    = cordic_pkg::FRACT_W,
   parameter int ITERATIONS = cordic_pkg::ITERATIONS
 ) (
-  input  logic [3:0]              k_lut_idx_x,   // 4 MSBs of x_in
-  input  logic [3:0]              k_lut_idx_y,   // 4 MSBs of y_in (separate)
-  output cordic_data_t            k_prescale_x,  // K × x_in approximation
-  output cordic_data_t            k_prescale_y   // K × y_in approximation
+  input  cordic_data_t x_in,          // full-precision input X
+  input  cordic_data_t y_in,          // full-precision input Y
+  output cordic_data_t k_prescale_x,  // round(K * x_in)
+  output cordic_data_t k_prescale_y   // round(K * y_in)
 );
 
-  // ---------------------------------------------------------------------------
-  // K-PRESCALE LUT: 16-entry, 4 MSB indexed
-  // K = 0.607252935; LUT maps 4 MSBs to K-scaled output in Q12.3
-  // ---------------------------------------------------------------------------
-  function automatic cordic_data_t k_lut(input logic [3:0] idx);
-    unique case (idx)
-      4'h0: return -16'sd32768;   // clamped MIN_NEG
-      4'h1: return -16'sd30720;
-      4'h2: return -16'sd28672;
-      4'h3: return -16'sd26624;
-      4'h4: return -16'sd24576;
-      4'h5: return -16'sd22528;
-      4'h6: return -16'sd20480;
-      4'h7: return -16'sd18432;
-      4'h8: return  16'sd0;
-      4'h9: return  16'sd18432;
-      4'ha: return  16'sd20480;
-      4'hb: return  16'sd22528;
-      4'hc: return  16'sd24576;
-      4'hd: return  16'sd26624;
-      4'he: return  16'sd28672;
-      4'hf: return  16'sd30720;
-      default: return '0;
-    endcase
+  // Wide accumulator: |v| <= 32768, v*2488 ~ 8.15e7 < 2^27. Use WIDTH+FRACT_W+2
+  // bits of headroom to hold the shifted partial products and the round bias.
+  localparam int ACC_W = WIDTH + FRACT_W + 2;   // 30 bits for 16/12
+
+  // Shift-add constant multiply by K_FACTOR (2488 = 2^11 + 2^9 - 2^6 - 2^3),
+  // then round-to-nearest arithmetic shift right by FRACT_W.
+  function automatic cordic_data_t k_prescale(input cordic_data_t v);
+    logic signed [ACC_W-1:0] ext;
+    logic signed [ACC_W-1:0] acc;
+    ext = ACC_W'(v);                            // sign-extend to accumulator width
+    acc = (ext <<< 11) + (ext <<< 9) - (ext <<< 6) - (ext <<< 3);
+    acc = acc + (1 <<< (FRACT_W-1));            // round-to-nearest bias (+2048)
+    acc = acc >>> FRACT_W;                      // arithmetic >> 12
+    return cordic_data_t'(acc[WIDTH-1:0]);
   endfunction
 
-  // ---------------------------------------------------------------------------
-  // COMBINATIONAL OUTPUTS
-  // ---------------------------------------------------------------------------
   always_comb begin
-    k_prescale_x = k_lut(k_lut_idx_x);
-    k_prescale_y = k_lut(k_lut_idx_y);
+    k_prescale_x = k_prescale(x_in);
+    k_prescale_y = k_prescale(y_in);
   end
 
 endmodule

@@ -84,17 +84,26 @@ package cordic_pkg;
     end
   endtask
 
-  // Arithmetic right shift (round-to-nearest)
+  // Arithmetic right shift, round-to-nearest (round half up).
+  // The rounding bias is added BEFORE the shift: (v + 2^(s-1)) >>> s.
+  // Sign-extends to WIDTH+1 bits so the bias never overflows near MAX_POS.
+  // Used by cordic_stage for the per-iteration shift; golden model matches.
+  function automatic cordic_data_t asr(input cordic_data_t v, input int s);
+    logic signed [WIDTH:0] ext;
+    if (s <= 0) return v;
+    ext = {v[WIDTH-1], v};
+    ext = ext + cordic_ext_t'(1 <<< (s - 1));   // round bias before shift
+    ext = ext >>> s;
+    return cordic_data_t'(ext[WIDTH-1:0]);
+  endfunction
+
+  // Task form of the above (reference/formal use).
   task automatic arith_shift_right(
     input  cordic_data_t val,
     input  int           shift,
     output cordic_data_t result
   );
-    logic signed [WIDTH:0] extended;
-    extended = {val[WIDTH-1], val};
-    extended = extended >>> shift;
-    if (shift > 0) extended = extended + (1 << (shift - 1));  // round
-    result = extended[WIDTH-1:0];
+    result = asr(val, shift);
   endtask
 
 endpackage

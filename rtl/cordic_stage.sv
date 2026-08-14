@@ -52,11 +52,12 @@ module cordic_stage
   logic sigma;
   always_comb sigma = ~z_in[WIDTH-1];  // MSB is sign bit; invert for sigma
 
-  // Fixed arithmetic right shift by STAGE_IDX (hardwired, no barrel shifter)
+  // Fixed arithmetic right shift by STAGE_IDX (hardwired, no barrel shifter),
+  // round-to-nearest to bound per-stage truncation bias (asr from cordic_pkg).
   cordic_data_t x_shifted, y_shifted;
   always_comb begin
-    x_shifted = cordic_data_t'($signed(x_in) >>> STAGE_IDX);
-    y_shifted = cordic_data_t'($signed(y_in) >>> STAGE_IDX);
+    x_shifted = asr(x_in, STAGE_IDX);
+    y_shifted = asr(y_in, STAGE_IDX);
   end
 
   // Conditional negate: +shifted if sigma=1, -shifted if sigma=0

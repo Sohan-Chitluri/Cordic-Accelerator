@@ -25,9 +25,9 @@
 |----|-------------|-------------|
 | FR-01 | **Rotation Mode** | Compute `x_out = K × (x_in cos(z_in) - y_in sin(z_in))`, `y_out = K × (x_in sin(z_in) + y_in cos(z_in))`, `z_out ≈ 0` for input vector `(x_in, y_in)` and angle `z_in`. **Input angle range restricted to approximately ±1.74 rad (~±99.5°)** — the standard CORDIC convergence zone for 8 iterations. Inputs outside this range produce undefined results. Full ±π range via quadrant folding is deferred to V2. |
 | FR-02 | **Parameterized Precision** | Data width `WIDTH` (default 16), fractional bits `FRACT_W` (default 12), iteration count `ITERATIONS` (default 8) all parameterizable at elaboration. |
-| FR-03 | **Pipelined Execution** | One input vector accepted per cycle after pipeline fill; latency = `ITERATIONS + 1` cycles; throughput = 1 vector/cycle. |
+| FR-03 | **Pipelined Execution** | One input vector accepted per cycle after pipeline fill; latency = `ITERATIONS + 2` cycles; throughput = 1 vector/cycle. |
 | FR-04 | **Configurable Saturation** | Saturating or wrap-around arithmetic selectable via configuration. |
-| FR-05 | **K-Factor Prescaling** | Input vector automatically scaled by CORDIC gain `K ≈ 0.607252935` via LUT to eliminate post-processing multiplication. |
+| FR-05 | **K-Factor Prescaling** | Input vector automatically scaled by CORDIC gain `K ≈ 0.607252935` via a multiplier-free shift-add constant network (K_FACTOR = 2488/4096, 0.028% error vs. true K), eliminating post-processing multiplication. |
 | FR-06 | **Simple Configuration** | Runtime configuration via `config_valid/ready` handshake (no AXI). |
 | FR-07 | **Standard I/O Handshake** | Valid/ready handshake on input and output data interfaces. |
 
@@ -59,7 +59,7 @@
 | **Pipelined Datapath** | `ITERATIONS` stages + input/output registers. |
 | **Fixed Per-Stage Shifts** | Shift amount hardwired per stage (eliminates barrel shifter). |
 | **LUT-Based Angle Table** | Combinational `atan(2⁻ⁱ)` for `i = 0..ITERATIONS-1`. |
-| **LUT-Based K-Factor Prescaling** | Input vector pre-multiplied by `K` via 16-entry LUT. |
+| **Shift-Add Constant K-Factor Prescaling** | Input vector pre-multiplied by `K ≈ 2488/4096` via a multiplier-free shift-add network. See ADR-0005. |
 | **Saturating Arithmetic** | Selectable per configuration. |
 | **Valid/Ready Handshake** | Backpressure support on input and output. |
 
@@ -72,7 +72,7 @@
 | **Full ±π Angle Range** | V2.0 | Requires quadrant folding pre-stage (detect quadrant, fold z into ±π/2, negate x when needed). Adds 1 cycle pre-processing. |
 | **Vectoring Mode** (atan2, magnitude) | V2.0 | Adds mode MUX in critical path; separate convergence behavior. |
 | **Hyperbolic Mode** (sinh, cosh, sqrt, ln, exp) | V2.0 | Requires repeated iterations (4, 13); different datapath. |
-| **Runtime K-Factor Multiplication** | V2.1 | V1 uses LUT prescaling; multiplier adds latency/area. |
+| **Runtime K-Factor Multiplication** | V2.1 | V1 uses shift-add constant K-prescaling; a general multiplier adds latency/area. |
 | **AXI-Lite Configuration** | V2.2 | Protocol compliance risk; simple handshake sufficient for V1. |
 | **AXI-Stream Data Interfaces** | V2.2 | Valid/ready handshake sufficient for V1 verification. |
 | **Dynamic Iteration Count** | V2.0 | Fixed at elaboration in V1; simplifies pipeline control. |
@@ -114,19 +114,19 @@
 | Metric | Target | Notes |
 |--------|--------|-------|
 | **Throughput** | 1 vector/cycle | After pipeline fill |
-| **Latency** | `ITERATIONS + 1` cycles | Default: 9 cycles (8 iterations + 1) |
+| **Latency** | `ITERATIONS + 2` cycles | Default: 10 cycles (8 iterations + 1 input reg + 1 output reg) |
 | **Numerical Accuracy** | ≤ 0.1° angle error | 8 iterations, 16-bit, Q12 format |
-| **Gain Accuracy** | < 0.1% K-factor error | LUT prescaling bit-exact for fixed `ITERATIONS` |
+| **Gain Accuracy** | < 0.1% K-factor error | Shift-add K-prescaling: K = 2488/4096, 0.028% vs. true K; within spec NFR-05 |
 | **Fmax** | Measured post-synthesis | No fixed target; design for correct timing at reasonable frequency |
 | **Area** | < 50k GE | Post-synthesis estimate |
-| **Pipeline Fill** | `ITERATIONS + 1` cycles | First valid output |
+| **Pipeline Fill** | `ITERATIONS + 2` cycles | First valid output |
 
 ---
 
 ## 8. Latency Analysis
 
 ```
-Cycle 0:    Input register (x_in, y_in, z_in) + K-prescale LUT
+Cycle 0:    Input register (x_in, y_in, z_in) + K-prescale (shift-add, combinational)
 Cycle 1:    Stage 0 (shift by 0, add/sub)
 Cycle 2:    Stage 1 (shift by 1, add/sub)
 ...
@@ -154,7 +154,7 @@ Cycle N+1:  Output register
 |-----------|-------------|---------------------|
 | **Angle Error (Rotation)** | ≤ 0.1° max for `|z_in| ≤ 1.74 rad` | Co-simulation vs Python golden model (10k random vectors within convergence zone) |
 | **Magnitude Preservation** | `|x_out|² + |y_out|² ≈ K²(|x_in|² + |y_in|²)` | Formal invariant: x²+y² preserved within rounding |
-| **K-Factor Error** | < 0.1% | LUT prescaling verified for all input combinations |
+| **K-Factor Error** | < 0.1% | Shift-add K-prescaling verified by full 65,536-value sweep (`cordic_lut_tb`) |
 | **Saturation Correctness** | No wraparound when enabled | Directed tests at min/max boundaries |
 | **Rounding Error** | Convergent rounding | Verified vs golden model |
 

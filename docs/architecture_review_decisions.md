@@ -20,7 +20,7 @@
 | # | Decision | Status | Rationale |
 |---|----------|--------|-----------|
 | 1 | **No general-purpose multiplier in V1** | APPROVED | Classical CORDIC rotation/vectoring uses shift-add only. Booth multiplier adds 2-cycle latency, ~3× area, formal verification burden for zero functional benefit in V1 modes. |
-| 2 | **Gain compensation = LUT prescaling** | APPROVED | Pre-scale inputs by K-factor (0.60725...) via 16-entry LUT. Zero cycles, zero multiplier, bit-exact, trivially verifiable. Runtime K-factor multiplication → V2. |
+| 2 | **Gain compensation = LUT prescaling** | ~~APPROVED~~ **SUPERSEDED** (ADR-0005, 2026-08-14) | Original 4-MSB LUT approach rejected after implementation review: indexing only 4 MSBs discards all 12 fractional bits. Replaced by shift-add constant network: `v × 2488 = (v<<11)+(v<<9)−(v<<6)−(v<<3)`, K = 2488/4096 (0.028% error). Zero cycles, zero multiplier, full input precision. See ADR-0005. |
 | 3 | **No AXI-Lite register file in V1** | APPROVED | AXI-Lite compliance adds 50+ cycles of protocol verification risk. V1 uses simple `config_valid/ready` handshake with hardened registers. AXI-Lite → V2. |
 | 4 | **Remove Fmax target (500 MHz)** | APPROVED | Student ASIC flows typically achieve 100-200 MHz post-P&R. Design for correct-by-construction timing; measure actual Fmax after synthesis. Target becomes "timing closure at reasonable frequency." |
 | 5 | **Rotation mode only (V1)** | APPROVED | Vectoring mode adds mode MUX in critical path and hyperbolic iteration complexity. V1 = rotation (sin/cos generation). Vectoring + hyperbolic → V2. |
@@ -37,8 +37,8 @@
 
 | Proposal | Reason for Rejection |
 |----------|---------------------|
-| `shift_add_mul.sv` (Booth multiplier) | Not used by classical CORDIC rotation; gain compensation handled by LUT prescaling |
-| `gain_compensator.sv` (multiplier-based) | Replaced by LUT prescaling in `cordic_lut.sv` |
+| `shift_add_mul.sv` (Booth multiplier) | Not used by classical CORDIC rotation; gain compensation handled by shift-add constant K-prescaling (ADR-0005) |
+| `gain_compensator.sv` (multiplier-based) | Replaced by shift-add constant K-prescaling in `cordic_lut.sv` (ADR-0005) |
 | `cordic_regfile.sv` (AXI-Lite) | Protocol compliance risk; simple handshake sufficient for V1 config |
 | `cordic_pipeline_ctrl.sv` (separate FSM) | Merged into `cordic_pipeline.sv` — pipeline control is trivial (valid shifting) |
 | `cordic_top_pkg.sv` (separate package) | Merged into `cordic_pkg.sv` |

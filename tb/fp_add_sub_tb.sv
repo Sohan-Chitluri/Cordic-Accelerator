@@ -1,95 +1,109 @@
+`timescale 1ns/1ps
 //==============================================================================
-// Testbench: fp_add_sub_tb.v
-// Description: Unit testbench for fp_add_sub module
-// Owner: Arithmetic RTL Agent
-// Dependencies: fp_add_sub.v, cordic_pkg.v
+// Testbench: fp_add_sub_tb
+// Description: Self-checking unit testbench for fp_add_sub (combinational).
+//              Expected values computed via cordic_pkg::sat_add / sat_sub.
+// Owner: Verification Agent
 // Wave: 1
 //==============================================================================
 
 module fp_add_sub_tb;
+  import cordic_pkg::*;
 
-  `include "cordic_pkg.v"
+  // DUT signals
+  cordic_data_t a, b, result;
+  logic         op;       // 0 = add, 1 = subtract
+  logic         sat;
+  logic         overflow;
 
-  // Parameters
-  parameter integer WIDTH   = 16;
-  parameter integer FRACT_W = 12;
-
-  // Signals
-  reg  signed [WIDTH-1:0] a, b;
-  reg                     op;   // 0 = add, 1 = sub
-  reg                     sat;  // 1 = saturate, 0 = wrap
-  wire signed [WIDTH-1:0] result;
-  wire                    overflow;
-
-  // DUT instance
-  fp_add_sub #(
-    .WIDTH(WIDTH),
-    .FRACT_W(FRACT_W),
-    .USE_CARRY_SELECT(1)
-  ) dut (
-    .a      (a),
-    .b      (b),
-    .op     (op),
-    .sat    (sat),
-    .result (result),
+  fp_add_sub dut (
+    .a       (a),
+    .b       (b),
+    .op      (op),
+    .sat     (sat),
+    .result  (result),
     .overflow(overflow)
   );
 
   // ---------------------------------------------------------------------------
-  // TEST VECTORS
+  // Checker
+  // ---------------------------------------------------------------------------
+  cordic_data_t exp_r;
+  logic         exp_o;
+  int           errors;
+
+  task automatic chk(input string label);
+    if (result !== exp_r || overflow !== exp_o) begin
+      $error("[fp_add_sub] %s: got result=%0d ovf=%0b  expected=%0d ovf=%0b",
+             label, result, overflow, exp_r, exp_o);
+      errors++;
+    end
+  endtask
+
+  // ---------------------------------------------------------------------------
+  // Test body
   // ---------------------------------------------------------------------------
   initial begin
-    $display("=== fp_add_sub Unit Testbench ===");
-    
-    // Test 1: Basic add
-    a = 16'sd100;  b = 16'sd200;  op = 1'b0; sat = 1'b1;
-    #10;
-    $display("ADD: %d + %d = %d (ovf=%b) [expected 300]", a, b, result, overflow);
-    
-    // Test 2: Basic sub
-    a = 16'sd500;  b = 16'sd200;  op = 1'b1; sat = 1'b1;
-    #10;
-    $display("SUB: %d - %d = %d (ovf=%b) [expected 300]", a, b, result, overflow);
-    
-    // Test 3: Saturation max
-    a = 16'sh7FFF; b = 16'sd1;    op = 1'b0; sat = 1'b1;
-    #10;
-    $display("SAT MAX: %d + %d = %d (ovf=%b) [expected 32767]", a, b, result, overflow);
-    
-    // Test 4: Saturation min
-    a = 16'sh8000; b = -16'sd1;   op = 1'b0; sat = 1'b1;
-    #10;
-    $display("SAT MIN: %d - %d = %d (ovf=%b) [expected -32768]", a, b, result, overflow);
-    
-    // Test 5: Wrap mode
-    a = 16'sh7FFF; b = 16'sd1;    op = 1'b0; sat = 1'b0;
-    #10;
-    $display("WRAP: %d + %d = %d (ovf=%b) [expected -32768]", a, b, result, overflow);
-    
-    // Test 6: Zero operands
-    a = 16'sd0;    b = 16'sd0;    op = 1'b0; sat = 1'b1;
-    #10;
-    $display("ZERO: %d + %d = %d (ovf=%b) [expected 0]", a, b, result, overflow);
-    
-    // Test 7: Negative add
-    a = -16'sd100; b = -16'sd200; op = 1'b0; sat = 1'b1;
-    #10;
-    $display("NEG ADD: %d + %d = %d (ovf=%b) [expected -300]", a, b, result, overflow);
-    
-    // Test 8: Sign change
-    a = 16'sh7FFF; b = 16'sh8000; op = 1'b0; sat = 1'b1;
-    #10;
-    $display("SIGN CHANGE: %d + %d = %d (ovf=%b) [expected -1]", a, b, result, overflow);
+    errors = 0;
 
-    $display("=== All Tests Complete ===");
-    $finish;
+    // --- ADD (op=0) ---
+
+    // Basic add
+    a = 16'sd100; b = 16'sd200; op = 1'b0; sat = 1'b1; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(100,200)");
+
+    // Negative add
+    a = -16'sd100; b = -16'sd200; op = 1'b0; sat = 1'b1; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(-100,-200)");
+
+    // Positive saturation
+    a = MAX_POS; b = 16'sd1; op = 1'b0; sat = 1'b1; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(MAX,1) sat");
+
+    // Negative saturation
+    a = MIN_NEG; b = -16'sd1; op = 1'b0; sat = 1'b1; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(MIN,-1) sat");
+
+    // Positive wrap (sat=0)
+    a = MAX_POS; b = 16'sd1; op = 1'b0; sat = 1'b0; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(MAX,1) wrap");
+
+    // Negative wrap (sat=0)
+    a = MIN_NEG; b = -16'sd1; op = 1'b0; sat = 1'b0; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(MIN,-1) wrap");
+
+    // Zero
+    a = 16'sd0; b = 16'sd0; op = 1'b0; sat = 1'b1; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(0,0)");
+
+    // --- SUBTRACT (op=1) ---
+
+    // Basic sub
+    a = 16'sd500; b = 16'sd200; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(500,200)");
+
+    // Negative saturation: MIN_NEG - 1 → clamp
+    a = MIN_NEG; b = 16'sd1; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(MIN,1) sat");
+
+    // Positive saturation: MAX_POS - (-1) → clamp
+    a = MAX_POS; b = -16'sd1; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(MAX,-1) sat");
+
+    // Negative wrap: MIN_NEG - 1
+    a = MIN_NEG; b = 16'sd1; op = 1'b1; sat = 1'b0; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(MIN,1) wrap");
+
+    // Self (MAX - MAX = 0)
+    a = MAX_POS; b = MAX_POS; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(MAX,MAX)");
+
+    // Q12 unit value round-trip
+    a = ONE_FIX; b = ONE_FIX; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(ONE,ONE)");
+
+    if (errors != 0) $fatal(1, "FAIL: fp_add_sub — %0d error(s)", errors);
+    else        $display("PASS: fp_add_sub");
   end
-
-  // ---------------------------------------------------------------------------
-  // ASSERTIONS
-  // ---------------------------------------------------------------------------
-`ifdef ASSERT_ON
-  // Basic functionality assertions would go here
-`endif
 
 endmodule

@@ -13,10 +13,15 @@ TB_DIR          := tb
 CONSTRAINTS_DIR := constraints
 SCRIPTS_DIR     := scripts
 OUTPUT_DIR      := output
+ABS_OUTPUT      := $(abspath $(OUTPUT_DIR))
 
 # Tool configuration
 VERILATOR       := verilator
+# -Wno-VARHIDDEN: modules intentionally re-expose package params (WIDTH, FRACT_W,
+# ITERATIONS) as overridable parameters defaulting to cordic_pkg values; the
+# name reuse shadows the wildcard-imported package identifiers by design.
 VERILATOR_FLAGS := --lint-only -Wall -Wno-UNUSED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME \
+                   -Wno-VARHIDDEN \
                    --top-module $(TOP_MODULE) \
                    --sv
 
@@ -25,9 +30,11 @@ OPENSTA         := sta
 
 # Simulation
 SIM_TOOL        := verilator
-SIM_FLAGS       := --cc --exe --build -j 0 -O3 -CFLAGS "-O3 -std=c++17" --no-timing \
+SIM_FLAGS       := --binary -j 0 -O3 -CFLAGS "-O3 -std=c++17" \
                    --trace --trace-structs \
-                   --sv
+                   -Wno-VARHIDDEN \
+                   -Wno-TIMESCALEMOD \
+                   --sv --timing --assert
 
 # Coverage
 COVERAGE_TOOL   := verilator
@@ -52,8 +59,8 @@ TB_SOURCES := \
 	$(TB_DIR)/cordic_pipeline_tb.sv \
 	$(TB_DIR)/cordic_top_tb.sv
 
-# C++ test harness for Verilator
-SIM_MAIN := $(TB_DIR)/sim_main.cpp
+# Top-level simulation testbench (self-checking, --binary)
+SIM_TB_TOP := cordic_top_tb
 
 # -----------------------------------------------------------------------------
 # DEFAULT TARGET
@@ -81,17 +88,20 @@ lint-full:
 # SIMULATION
 # -----------------------------------------------------------------------------
 .PHONY: sim
-sim: $(SIM_MAIN)
+sim:
 	@echo "=== Building Simulation ==="
 	@mkdir -p $(OUTPUT_DIR)
-	$(VERILATOR) $(SIM_FLAGS) $(RTL_SOURCES) $(TB_SOURCES) $(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/V$(TOP_MODULE)
+	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module $(SIM_TB_TOP) \
+		$(RTL_SOURCES) \
+		$(TB_DIR)/$(SIM_TB_TOP).sv \
+		-o $(ABS_OUTPUT)/V$(SIM_TB_TOP)
 	@echo "=== Simulation Build Complete ==="
 
 .PHONY: sim-run
 sim-run: sim
 	@echo "=== Running Simulation ==="
-	$(OUTPUT_DIR)/V$(TOP_MODULE)
+	$(ABS_OUTPUT)/V$(SIM_TB_TOP)
 
 # -----------------------------------------------------------------------------
 # UNIT TESTS (per module)
@@ -99,61 +109,65 @@ sim-run: sim
 .PHONY: test-unit-fp_add_sub
 test-unit-fp_add_sub:
 	@echo "=== Unit Test: fp_add_sub ==="
+	@mkdir -p $(OUTPUT_DIR)
 	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module fp_add_sub_tb \
 		$(RTL_DIR)/pkg/cordic_pkg.sv \
 		$(RTL_DIR)/fp_add_sub.sv \
 		$(TB_DIR)/fp_add_sub_tb.sv \
-		$(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/Vfp_add_sub_test
-	$(OUTPUT_DIR)/Vfp_add_sub_test
+		-o $(ABS_OUTPUT)/Vfp_add_sub_tb
+	$(ABS_OUTPUT)/Vfp_add_sub_tb
 
 .PHONY: test-unit-cordic_lut
 test-unit-cordic_lut:
 	@echo "=== Unit Test: cordic_lut ==="
+	@mkdir -p $(OUTPUT_DIR)
 	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module cordic_lut_tb \
 		$(RTL_DIR)/pkg/cordic_pkg.sv \
 		$(RTL_DIR)/cordic_lut.sv \
 		$(TB_DIR)/cordic_lut_tb.sv \
-		$(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/Vcordic_lut_test
-	$(OUTPUT_DIR)/Vcordic_lut_test
+		-o $(ABS_OUTPUT)/Vcordic_lut_tb
+	$(ABS_OUTPUT)/Vcordic_lut_tb
 
 .PHONY: test-unit-cordic_stage
 test-unit-cordic_stage:
 	@echo "=== Unit Test: cordic_stage ==="
+	@mkdir -p $(OUTPUT_DIR)
 	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module cordic_stage_tb \
 		$(RTL_DIR)/pkg/cordic_pkg.sv \
 		$(RTL_DIR)/fp_add_sub.sv \
-		$(RTL_DIR)/cordic_lut.sv \
 		$(RTL_DIR)/cordic_stage.sv \
 		$(TB_DIR)/cordic_stage_tb.sv \
-		$(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/Vcordic_stage_test
-	$(OUTPUT_DIR)/Vcordic_stage_test
+		-o $(ABS_OUTPUT)/Vcordic_stage_tb
+	$(ABS_OUTPUT)/Vcordic_stage_tb
 
 .PHONY: test-unit-cordic_pipeline
 test-unit-cordic_pipeline:
-	@echo "=== Unit Test: cordic_pipeline ==="
+	@echo "=== Integration Test: cordic_pipeline ==="
+	@mkdir -p $(OUTPUT_DIR)
 	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module cordic_pipeline_tb \
 		$(RTL_DIR)/pkg/cordic_pkg.sv \
 		$(RTL_DIR)/fp_add_sub.sv \
 		$(RTL_DIR)/cordic_lut.sv \
 		$(RTL_DIR)/cordic_stage.sv \
 		$(RTL_DIR)/cordic_pipeline.sv \
 		$(TB_DIR)/cordic_pipeline_tb.sv \
-		$(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/Vcordic_pipeline_test
-	$(OUTPUT_DIR)/Vcordic_pipeline_test
+		-o $(ABS_OUTPUT)/Vcordic_pipeline_tb
+	$(ABS_OUTPUT)/Vcordic_pipeline_tb
 
 .PHONY: test-unit-cordic_top
 test-unit-cordic_top:
-	@echo "=== Unit Test: cordic_top ==="
+	@echo "=== Integration Test: cordic_top ==="
+	@mkdir -p $(OUTPUT_DIR)
 	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module cordic_top_tb \
 		$(RTL_SOURCES) \
 		$(TB_DIR)/cordic_top_tb.sv \
-		$(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/Vcordic_top_test
-	$(OUTPUT_DIR)/Vcordic_top_test
+		-o $(ABS_OUTPUT)/Vcordic_top_tb
+	$(ABS_OUTPUT)/Vcordic_top_tb
 
 .PHONY: test-unit
 test-unit: test-unit-fp_add_sub test-unit-cordic_lut test-unit-cordic_stage test-unit-cordic_pipeline test-unit-cordic_top
@@ -172,9 +186,12 @@ test: test-unit
 coverage:
 	@echo "=== Running with Coverage ==="
 	@mkdir -p $(OUTPUT_DIR)/coverage
-	$(VERILATOR) $(SIM_FLAGS) $(COVERAGE_FLAGS) $(RTL_SOURCES) $(TB_SOURCES) $(SIM_MAIN) \
-		-o $(OUTPUT_DIR)/V$(TOP_MODULE)_cov
-	$(OUTPUT_DIR)/V$(TOP_MODULE)_cov
+	$(VERILATOR) $(SIM_FLAGS) $(COVERAGE_FLAGS) \
+		--top-module $(SIM_TB_TOP) \
+		$(RTL_SOURCES) \
+		$(TB_DIR)/$(SIM_TB_TOP).sv \
+		-o $(ABS_OUTPUT)/V$(SIM_TB_TOP)_cov
+	$(ABS_OUTPUT)/V$(SIM_TB_TOP)_cov
 	@echo "=== Coverage Data Generated ==="
 
 .PHONY: coverage-report
@@ -225,7 +242,9 @@ golden:
 .PHONY: gen-vectors
 gen-vectors:
 	@echo "=== Generating Test Vectors ==="
-	python3 $(TB_DIR)/golden_model.py gen 10000 $(TB_DIR)/test_vectors/regression_10k.json
+	@mkdir -p $(TB_DIR)/test_vectors
+	python3 $(TB_DIR)/golden_model.py gen     10000 $(TB_DIR)/test_vectors/regression_10k.json
+	python3 $(TB_DIR)/golden_model.py gen-mem 10000 $(TB_DIR)/test_vectors/regression.mem
 
 # -----------------------------------------------------------------------------
 # CLEAN

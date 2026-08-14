@@ -16,11 +16,11 @@ A parameterized fixed-point pipelined CORDIC accelerator implementing **rotation
 | Decision | Rationale |
 |----------|-----------|
 | **No multiplier** | Classical CORDIC rotation uses only shifts and adds |
-| **K-factor via LUT prescaling** | 0-cycle, zero multiplier, bit-exact for fixed iterations |
+| **Shift-add constant K-factor prescaling** | 0-cycle, zero multiplier, 0.028% K-error, full input precision (see ADR-0005) |
 | **No AXI-Lite** | Simple valid/ready config handshake eliminates protocol compliance risk |
 | **No fixed Fmax target** | Measure post-synthesis; design for correct-by-construction timing |
 | **8 iterations (16-bit)** | Converges to <0.15°; halves pipeline depth vs 16 iterations |
-| **Combinational LUTs** | `atan(2⁻ⁱ)` + K-factor LUTs synthesize to distributed ROM, 0-cycle latency |
+| **Combinational angle LUTs** | `atan(2⁻ⁱ)` constants embedded per stage (distributed ROM), 0-cycle latency; K-factor via shift-add |
 | **Fixed shift per stage** | Hardwired shift amount eliminates barrel shifter from critical path |
 | **SystemVerilog 2012** | `logic`, `always_ff`/`always_comb`, packages, `$clog2`, SVA; full Yosys 0.13+/Verilator 5+ support |
 
@@ -42,13 +42,12 @@ cordic-accelerator-asic/
 │   ├── common/
 │   │   └── cordic_assertions.sv       # Bindable SVA assertions
 │   ├── fp_add_sub.sv                  # Carry-select saturating adder/subtractor (Agent: Arithmetic)
-│   ├── cordic_lut.sv                  # atan(2⁻ⁱ) + K-prescale LUTs (Agent: Datapath)
+│   ├── cordic_lut.sv                  # K-factor prescaler (shift-add constant, Agent: Datapath)
 │   ├── cordic_stage.sv                # Single CORDIC iteration (Agent: Datapath)
 │   ├── cordic_pipeline.sv             # N-stage pipeline + valid/ready + config (Agent: Pipeline)
 │   └── cordic_top.sv                  # Top-level I/O + config handshake (Agent: Integration)
 ├── tb/
 │   ├── golden_model.py                # Bit-exact Python reference for co-simulation
-│   ├── sim_main.cpp                   # Verilator C++ test harness
 │   ├── fp_add_sub_tb.sv               # Unit test: adder
 │   ├── cordic_lut_tb.sv               # Unit test: LUTs
 │   ├── cordic_stage_tb.sv             # Unit test: stage

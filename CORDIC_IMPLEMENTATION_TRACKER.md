@@ -18,7 +18,7 @@ This tracker is the result of a formal architecture review of the initial implem
 | Decision | Rationale |
 |----------|-----------|
 | **No general-purpose multiplier in V1** | Classical CORDIC uses shift-add only; Booth multiplier adds 2-cycle latency, ~3× area, formal verification burden for zero benefit in rotation/vectoring modes |
-| **Gain compensation = LUT prescaling (V1)** | Single-cycle, zero multiplier, bit-exact, trivially verifiable; runtime K-factor multiplication deferred to V2 |
+| **Gain compensation = shift-add constant K-prescaling (V1)** | Zero-cycle, zero multiplier, full input precision, 0.028% K-error; original 4-MSB LUT rejected (discards fractional bits). See ADR-0005. |
 | **No AXI-Lite register file (V1)** | Hardened registers via simple `config_valid`/`config_ready` handshake eliminates protocol compliance risk; AXI-Lite added in V2 |
 | **Fmax target removed** | Measure actual Fmax post-synthesis; design for correct-by-construction timing at reasonable frequency (100-200 MHz typical for student ASIC flow) |
 | **3 pipeline stages → 2** | V1 implements rotation mode only (vectoring in V2); eliminates mode MUX in critical path, reduces stages from 16→8 for 16-bit |
@@ -72,7 +72,7 @@ This tracker is the result of a formal architecture review of the initial implem
 |---------|--------|--------|
 | Vectoring mode | `cordic_stage` mode MUX | Adds critical path MUX; separate datapath in V2 |
 | Hyperbolic mode | Repeat iteration logic | Requires iteration 4,13 repeat; separate V2 pipeline |
-| Gain compensation multiplier | `shift_add_mul` | Not needed — LUT prescaling is bit-exact for fixed N |
+| Gain compensation multiplier | `shift_add_mul` | Not needed — shift-add constant K-prescaling is multiplier-free for fixed N |
 | AXI-Lite register file | `cordic_regfile` | Protocol compliance risk; simple handshake in V1 |
 | AXI-Stream data interfaces | `cordic_top` ports | Valid/ready handshake sufficient for V1 verification |
 | Matrix/vector ops | New modules | Robotics Accelerator V2+ scope |
@@ -150,8 +150,8 @@ endpackage
 |--------|-----------|-----------|---------|
 | `fp_add_sub` | `fp_add_sub_if` | In | `a`, `b`, `op` (0=add,1=sub), `sat` |
 | | | Out | `result`, `overflow` |
-| `cordic_lut` | `cordic_lut_if` | In | `stage_idx`, `k_lut_idx` (4 MSBs of x/y) |
-| | | Out | `angle_out` (atan), `k_prescale_x`, `k_prescale_y` |
+| `cordic_lut` | `cordic_lut_if` | In | `x_in`, `y_in` (full-width, signed) |
+| | | Out | `k_prescale_x`, `k_prescale_y` |
 | `cordic_stage` | `cordic_stage_if` | In | `x_in`, `y_in`, `z_in`, `stage_idx`, `valid_in`, `sat` |
 | | | Out | `x_out`, `y_out`, `z_out`, `valid_out`, `overflow` |
 | `cordic_pipeline` | `cordic_pipe_if` | In | `x_in`, `y_in`, `z_in`, `cfg`, `valid_in`, `ready_out` |

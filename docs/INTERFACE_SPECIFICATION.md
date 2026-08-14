@@ -149,29 +149,33 @@ endpackage
 
 ---
 
-### 5.2 `cordic_lut.sv` — Combinational LUT
+### 5.2 `cordic_lut.sv` — K-Factor Prescaler (Shift-Add Constant)
 
 ```systemverilog
 module cordic_lut #(
-  parameter int WIDTH       = 16,
-  parameter int FRACT_W     = 12,
-  parameter int ITERATIONS  = 8
+  parameter int WIDTH      = cordic_pkg::WIDTH,
+  parameter int FRACT_W    = cordic_pkg::FRACT_W,
+  parameter int ITERATIONS = cordic_pkg::ITERATIONS
 ) (
-  input  logic [$clog2(ITERATIONS):0] stage_idx,  // 0..ITERATIONS-1
-  input  logic [3:0]                  k_lut_idx,   // 4 MSBs of x/y for K-prescale
-  output logic signed [WIDTH-1:0]     angle_out,   // atan(2^-stage_idx)
-  output logic signed [WIDTH-1:0]     k_prescale_x, // K * x_in (via LUT)
-  output logic signed [WIDTH-1:0]     k_prescale_y  // K * y_in (via LUT)
+  input  logic signed [WIDTH-1:0]  x_in,         // full-precision X input
+  input  logic signed [WIDTH-1:0]  y_in,         // full-precision Y input
+  output logic signed [WIDTH-1:0]  k_prescale_x, // round(K * x_in)
+  output logic signed [WIDTH-1:0]  k_prescale_y  // round(K * y_in)
 );
 ```
 
+K-prescaling uses a multiplier-free shift-add constant network:  
+`v × 2488 = (v<<11) + (v<<9) − (v<<6) − (v<<3)`, then `k = (v×2488 + 2048) >>> 12`  
+(round-to-nearest arithmetic right shift). K ≈ 2488/4096 = 0.607421875 (0.028% vs. true K). See ADR-0005.
+
 | Signal | Direction | Width | Description |
 |--------|-----------|-------|-------------|
-| `stage_idx` | Input | `$clog2(ITERATIONS)` | Stage index (0 to ITERATIONS-1) |
-| `k_lut_idx` | Input | 4 | 4 MSBs of input x or y for K-prescale |
-| `angle_out` | Output | `WIDTH` | `atan(2^-stage_idx)` in Q-format |
-| `k_prescale_x` | Output | `WIDTH` | K-prescaled x (LUT lookup) |
-| `k_prescale_y` | Output | `WIDTH` | K-prescaled y (LUT lookup) |
+| `x_in` | Input | `WIDTH` | Full-precision X input (signed, Q-format) |
+| `y_in` | Input | `WIDTH` | Full-precision Y input (signed, Q-format) |
+| `k_prescale_x` | Output | `WIDTH` | `round(K × x_in)` via shift-add |
+| `k_prescale_y` | Output | `WIDTH` | `round(K × y_in)` via shift-add |
+
+**Note:** Per-stage `atan(2⁻ⁱ)` angle constants are embedded directly in each `cordic_stage` instance as localparams; `cordic_lut` is solely responsible for K-factor prescaling.
 
 **Timing:** Purely combinational (0-cycle latency)
 
