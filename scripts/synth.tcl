@@ -6,8 +6,8 @@
 #==============================================================================
 
 # Read design files in dependency order (package first — others depend on it)
+# cordic_assertions.sv is a monitor/SVA module only — not synthesizable
 read_verilog -sv rtl/pkg/cordic_pkg.sv
-read_verilog -sv rtl/common/cordic_assertions.sv
 read_verilog -sv rtl/fp_add_sub.sv
 read_verilog -sv rtl/cordic_lut.sv
 read_verilog -sv rtl/cordic_stage.sv

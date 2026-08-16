@@ -23,10 +23,12 @@ output/
 *.sta
 sta_*.rpt
 
-# SymbiYosys formal
-*.sby
-formal/
-*sby*
+# SymbiYosys formal — ignore generated work directories, not source files
+# (*.sby source files and tb/formal/cordic_formal.sby, tb/formal/cordic_formal_tb.sv are tracked)
+*_bmc/
+*_prove/
+*_cover/
+tb/formal/cordic_formal/
 
 # Python
 __pycache__/

@@ -9,9 +9,9 @@
 // Wave: 4 (Top-Level & Sign-Off)
 //==============================================================================
 
-module cordic_top
-  import cordic_pkg::*;
-#(
+import cordic_pkg::*;
+
+module cordic_top #(
   parameter int WIDTH      = cordic_pkg::WIDTH,
   parameter int FRACT_W    = cordic_pkg::FRACT_W,
   parameter int ITERATIONS = cordic_pkg::ITERATIONS
@@ -19,9 +19,9 @@ module cordic_top
   input  logic                    clk,
   input  logic                    rst_n,
   // Data input
-  input  cordic_data_t            x_in,
-  input  cordic_data_t            y_in,
-  input  cordic_data_t            z_in,
+  input  logic signed [WIDTH-1:0] x_in,
+  input  logic signed [WIDTH-1:0] y_in,
+  input  logic signed [WIDTH-1:0] z_in,
   input  logic                    valid_in,
   output logic                    ready_out,
   // Configuration
@@ -30,9 +30,9 @@ module cordic_top
   input  logic                    config_valid,
   output logic                    config_ready,
   // Data output
-  output cordic_data_t            x_out,
-  output cordic_data_t            y_out,
-  output cordic_data_t            z_out,
+  output logic signed [WIDTH-1:0] x_out,
+  output logic signed [WIDTH-1:0] y_out,
+  output logic signed [WIDTH-1:0] z_out,
   output logic                    valid_out,
   input  logic                    ready_in,
   // Status

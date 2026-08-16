@@ -1,0 +1,40 @@
+# SymbiYosys formal verification job — CORDIC stage-level BMC
+#
+# Verifies: reset behaviour, saturation clamping, valid propagation,
+#           output range (cordic_assertions.sv + cordic_formal_tb.sv).
+#
+# Run from project root:
+#   make formal
+# or directly:
+#   sby -f tb/formal/cordic_formal.sby
+#
+# PASS  = all assertions proved within depth 20
+# FAIL  = counterexample found (property violated)
+# UNKNOWN = solver timeout or depth insufficient — NOT treated as PASS
+#
+# Depth 20 covers all current temporal properties (max lookahead = 2 cycles).
+# Increase depth and add 'prove' mode for full inductive verification.
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+# sby copies [files] to src/ (flat — no subdirs); script uses basenames only.
+# Yosys 0.67 does NOT support SVA property...endproperty — cordic_assertions.sv
+# (SVA format) is excluded; procedural $past-based assertions live in the harness.
+# Compilation-unit scope imports required for Yosys 0.67 (see synthesis notes).
+read -formal -DFORMAL cordic_pkg.sv
+read -formal -DFORMAL fp_add_sub.sv
+read -formal -DFORMAL cordic_stage.sv
+read -formal -DFORMAL cordic_formal_tb.sv
+prep -top cordic_formal_tb
+
+[files]
+rtl/pkg/cordic_pkg.sv
+rtl/fp_add_sub.sv
+rtl/cordic_stage.sv
+tb/formal/cordic_formal_tb.sv

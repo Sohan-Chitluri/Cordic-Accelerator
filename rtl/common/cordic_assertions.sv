@@ -8,9 +8,9 @@
 // Wave: 0 (Foundation)
 //==============================================================================
 
-module cordic_assertions
-  import cordic_pkg::*;
-#(
+import cordic_pkg::*;
+
+module cordic_assertions #(
   parameter int WIDTH      = cordic_pkg::WIDTH,
   parameter int FRACT_W    = cordic_pkg::FRACT_W,
   parameter int ITERATIONS = cordic_pkg::ITERATIONS

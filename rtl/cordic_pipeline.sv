@@ -12,9 +12,9 @@
 // Wave: 3 (Pipeline Assembly)
 //==============================================================================
 
-module cordic_pipeline
-  import cordic_pkg::*;
-#(
+import cordic_pkg::*;
+
+module cordic_pipeline #(
   parameter int WIDTH      = cordic_pkg::WIDTH,
   parameter int FRACT_W    = cordic_pkg::FRACT_W,
   parameter int ITERATIONS = cordic_pkg::ITERATIONS
@@ -22,9 +22,9 @@ module cordic_pipeline
   input  logic                    clk,
   input  logic                    rst_n,
   // Input interface
-  input  cordic_data_t            x_in,
-  input  cordic_data_t            y_in,
-  input  cordic_data_t            z_in,
+  input  logic signed [WIDTH-1:0] x_in,
+  input  logic signed [WIDTH-1:0] y_in,
+  input  logic signed [WIDTH-1:0] z_in,
   input  logic                    valid_in,
   output logic                    ready_out,
   // Configuration (simple handshake — no AXI)
@@ -33,9 +33,9 @@ module cordic_pipeline
   input  logic                    config_valid,
   output logic                    config_ready,
   // Output interface
-  output cordic_data_t            x_out,
-  output cordic_data_t            y_out,
-  output cordic_data_t            z_out,
+  output logic signed [WIDTH-1:0] x_out,
+  output logic signed [WIDTH-1:0] y_out,
+  output logic signed [WIDTH-1:0] z_out,
   output logic                    valid_out,
   input  logic                    ready_in,
   // Status
@@ -65,7 +65,7 @@ module cordic_pipeline
   // ---------------------------------------------------------------------------
   // K-PRESCALE (input stage only) — shift-add constant multiply by K
   // ---------------------------------------------------------------------------
-  cordic_data_t lut_k_x, lut_k_y;
+  logic signed [WIDTH-1:0] lut_k_x, lut_k_y;
 
   cordic_lut #(.WIDTH(WIDTH), .FRACT_W(FRACT_W), .ITERATIONS(ITERATIONS)) lut_inst (
     .x_in        (x_in),
@@ -77,9 +77,9 @@ module cordic_pipeline
   // ---------------------------------------------------------------------------
   // STAGE INTERCONNECT (N+1 entries: index 0 = input, index N = last stage out)
   // ---------------------------------------------------------------------------
-  cordic_data_t stage_x [0:ITERATIONS];
-  cordic_data_t stage_y [0:ITERATIONS];
-  cordic_data_t stage_z [0:ITERATIONS];
+  logic signed [WIDTH-1:0] stage_x [0:ITERATIONS];
+  logic signed [WIDTH-1:0] stage_y [0:ITERATIONS];
+  logic signed [WIDTH-1:0] stage_z [0:ITERATIONS];
   logic         stage_valid    [0:ITERATIONS];
   logic         stage_overflow [0:ITERATIONS];
 

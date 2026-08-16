@@ -20,8 +20,10 @@ VERILATOR       := verilator
 # -Wno-VARHIDDEN: modules intentionally re-expose package params (WIDTH, FRACT_W,
 # ITERATIONS) as overridable parameters defaulting to cordic_pkg values; the
 # name reuse shadows the wildcard-imported package identifiers by design.
+# -Wno-IMPORTSTAR: compilation-unit scope import is used for Yosys 0.67
+# compatibility (Yosys does not support module-header or module-body import).
 VERILATOR_FLAGS := --lint-only -Wall -Wno-UNUSED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME \
-                   -Wno-VARHIDDEN \
+                   -Wno-VARHIDDEN -Wno-IMPORTSTAR \
                    --top-module $(TOP_MODULE) \
                    --sv
 
@@ -208,7 +210,7 @@ coverage-report:
 synth:
 	@echo "=== Running Yosys Synthesis ==="
 	@mkdir -p $(OUTPUT_DIR)
-	$(YOSYS) -s $(SCRIPTS_DIR)/synth.tcl
+	$(YOSYS) -s $(SCRIPTS_DIR)/synth.tcl 2>&1 | tee $(OUTPUT_DIR)/yosys_synth.log
 	@echo "=== Synthesis Complete ==="
 
 # -----------------------------------------------------------------------------

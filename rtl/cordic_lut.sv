@@ -23,17 +23,17 @@
 // Wave: 1 (Arithmetic Primitives)
 //==============================================================================
 
-module cordic_lut
-  import cordic_pkg::*;
-#(
+import cordic_pkg::*;
+
+module cordic_lut #(
   parameter int WIDTH      = cordic_pkg::WIDTH,
   parameter int FRACT_W    = cordic_pkg::FRACT_W,
   parameter int ITERATIONS = cordic_pkg::ITERATIONS
 ) (
-  input  cordic_data_t x_in,          // full-precision input X
-  input  cordic_data_t y_in,          // full-precision input Y
-  output cordic_data_t k_prescale_x,  // round(K * x_in)
-  output cordic_data_t k_prescale_y   // round(K * y_in)
+  input  logic signed [WIDTH-1:0] x_in,          // full-precision input X
+  input  logic signed [WIDTH-1:0] y_in,           // full-precision input Y
+  output logic signed [WIDTH-1:0] k_prescale_x,   // round(K * x_in)
+  output logic signed [WIDTH-1:0] k_prescale_y    // round(K * y_in)
 );
 
   // Wide accumulator: |v| <= 32768, v*2488 ~ 8.15e7 < 2^27. Use WIDTH+FRACT_W+2
@@ -42,14 +42,14 @@ module cordic_lut
 
   // Shift-add constant multiply by K_FACTOR (2488 = 2^11 + 2^9 - 2^6 - 2^3),
   // then round-to-nearest arithmetic shift right by FRACT_W.
-  function automatic cordic_data_t k_prescale(input cordic_data_t v);
+  function automatic logic signed [WIDTH-1:0] k_prescale(input logic signed [WIDTH-1:0] v);
     logic signed [ACC_W-1:0] ext;
     logic signed [ACC_W-1:0] acc;
     ext = ACC_W'(v);                            // sign-extend to accumulator width
     acc = (ext <<< 11) + (ext <<< 9) - (ext <<< 6) - (ext <<< 3);
     acc = acc + (1 <<< (FRACT_W-1));            // round-to-nearest bias (+2048)
     acc = acc >>> FRACT_W;                      // arithmetic >> 12
-    return cordic_data_t'(acc[WIDTH-1:0]);
+    k_prescale = acc[WIDTH-1:0];
   endfunction
 
   always_comb begin

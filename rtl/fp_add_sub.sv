@@ -8,9 +8,9 @@
 // Wave: 1 (Arithmetic Primitives)
 //==============================================================================
 
-module fp_add_sub
-  import cordic_pkg::*;
-#(
+import cordic_pkg::*;
+
+module fp_add_sub #(
   parameter int WIDTH            = cordic_pkg::WIDTH,
   parameter int FRACT_W          = cordic_pkg::FRACT_W,
   parameter bit USE_CARRY_SELECT = 1'b1
@@ -64,8 +64,9 @@ module fp_add_sub
 `ifdef ASSERT_ON
   always_comb begin
     if (sat) begin
-      assert (!(overflow) || result == MAX_POS_EXT[WIDTH-1:0] || result == MIN_NEG_EXT[WIDTH-1:0])
-        else $error("fp_add_sub: sat overflow but result not clamped");
+      // Yosys formal does not support 'assert...else' in always_comb.
+      // Verilator still reports failures on bare assert; $error removed.
+      assert (!(overflow) || result == MAX_POS_EXT[WIDTH-1:0] || result == MIN_NEG_EXT[WIDTH-1:0]);
     end
   end
 `endif

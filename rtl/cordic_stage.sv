@@ -11,30 +11,30 @@
 // Wave: 2 (Core Stage)
 //==============================================================================
 
-module cordic_stage
-  import cordic_pkg::*;
-#(
+import cordic_pkg::*;
+
+module cordic_stage #(
   parameter int WIDTH     = cordic_pkg::WIDTH,
   parameter int FRACT_W   = cordic_pkg::FRACT_W,
   parameter int STAGE_IDX = 0              // hardwired 0..ITERATIONS-1 per instance
 ) (
   input  logic                    clk,
   input  logic                    rst_n,
-  input  cordic_data_t            x_in,
-  input  cordic_data_t            y_in,
-  input  cordic_data_t            z_in,
+  input  logic signed [WIDTH-1:0] x_in,
+  input  logic signed [WIDTH-1:0] y_in,
+  input  logic signed [WIDTH-1:0] z_in,
   input  logic                    valid_in,
   input  logic                    sat,     // 1 = saturate, 0 = wrap
-  output cordic_data_t            x_out,
-  output cordic_data_t            y_out,
-  output cordic_data_t            z_out,
+  output logic signed [WIDTH-1:0] x_out,
+  output logic signed [WIDTH-1:0] y_out,
+  output logic signed [WIDTH-1:0] z_out,
   output logic                    valid_out,
   output logic                    overflow
 );
 
   // Per-stage angle: atan(2^-STAGE_IDX) × 2^FRACT_W in Q12.3 (FRACT_W=12).
   // Nested ternary for guaranteed elaboration-time constant folding in all tools.
-  localparam cordic_data_t STAGE_ANGLE =
+  localparam logic signed [WIDTH-1:0] STAGE_ANGLE =
     (STAGE_IDX == 0) ? 16'sd3217 :   // 45.000°
     (STAGE_IDX == 1) ? 16'sd1934 :   // 26.565°
     (STAGE_IDX == 2) ? 16'sd1016 :   // 14.036°
@@ -52,23 +52,34 @@ module cordic_stage
   logic sigma;
   always_comb sigma = ~z_in[WIDTH-1];  // MSB is sign bit; invert for sigma
 
-  // Fixed arithmetic right shift by STAGE_IDX (hardwired, no barrel shifter),
-  // round-to-nearest to bound per-stage truncation bias (asr from cordic_pkg).
-  cordic_data_t x_shifted, y_shifted;
+  // Round-to-nearest arithmetic right shift by STAGE_IDX (hardwired, no barrel
+  // shifter). Inlined from cordic_pkg::asr — calling through an 'input int'
+  // function parameter prevents Yosys from constant-folding the shift amount,
+  // which leaves x_shifted[0]/y_shifted[0] undriven in the synthesized netlist.
+  localparam int ROUND_BIAS = (STAGE_IDX > 0) ? (1 << (STAGE_IDX - 1)) : 0;
+
+  logic signed [WIDTH:0]   biased_x,      biased_y;
+  logic signed [WIDTH:0]   shifted_ext_x, shifted_ext_y;
+  logic signed [WIDTH-1:0] x_shifted,     y_shifted;
+
   always_comb begin
-    x_shifted = asr(x_in, STAGE_IDX);
-    y_shifted = asr(y_in, STAGE_IDX);
+    biased_x      = {x_in[WIDTH-1], x_in} + (WIDTH+1)'(ROUND_BIAS);
+    biased_y      = {y_in[WIDTH-1], y_in} + (WIDTH+1)'(ROUND_BIAS);
+    shifted_ext_x = biased_x      >>> STAGE_IDX;
+    shifted_ext_y = biased_y      >>> STAGE_IDX;
+    x_shifted     = shifted_ext_x[WIDTH-1:0];
+    y_shifted     = shifted_ext_y[WIDTH-1:0];
   end
 
   // Conditional negate: +shifted if sigma=1, -shifted if sigma=0
-  cordic_data_t x_mux, y_mux;
+  logic signed [WIDTH-1:0] x_mux, y_mux;
   always_comb begin
     x_mux = sigma ? x_shifted : -x_shifted;
     y_mux = sigma ? y_shifted : -y_shifted;
   end
 
   // Three fp_add_sub instances
-  cordic_data_t x_comb, y_comb, z_comb;
+  logic signed [WIDTH-1:0] x_comb, y_comb, z_comb;
   logic         ovf_x, ovf_y, ovf_z;
 
   // X path: x_new = x_in - sigma × (y_in >> STAGE_IDX)
