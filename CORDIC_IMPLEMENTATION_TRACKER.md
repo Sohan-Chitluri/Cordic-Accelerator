@@ -209,13 +209,13 @@ endpackage
 
 ### Wave 4 — Top-Level & Sign-Off (Week 5) — **Lead Integration Only**
 
-| Module | Owner | Scope | Dependencies | Exit Criteria | Verification |
-|--------|-------|-------|--------------|---------------|--------------|
-| `cordic_top.sv` | Lead | Top-level: `cordic_pipeline` + config handshake + I/O registers + IRQ | `cordic_pipeline`, `cordic_pkg` | ✅ Integration clean, all ports connected, synthesis passes, STA clean | Full top-level testbench, CDC check (none in V1), reset sequence |
-| `cordic.sdc` | Lead | Clock definition, input/output delays (set_input_delay/set_output_delay), clock uncertainty | `cordic_top` | ✅ STA passes: zero setup/hold violations, slack > 0 | `make sta` → report |
-| `cordic_tb.sv` | All | Regression testbench: all prior tests + coverage merge | All modules | ✅ Merged coverage > 95%, all tests pass | `make regress` |
+|| Module | Owner | Scope | Dependencies | Exit Criteria | Verification |
+||--------|-------|-------|--------------|---------------|--------------|
+|| `cordic_top.sv` | Lead | Top-level: `cordic_pipeline` + config handshake + I/O registers + IRQ | `cordic_pipeline`, `cordic_pkg` | ✅ Integration clean, all ports connected, synthesis passes | Full top-level testbench, CDC check (none in V1), reset sequence |
+|| `cordic.sdc` | Lead | Clock definition, input/output delays (set_input_delay/set_output_delay), clock uncertainty | `cordic_top` | ⚠️ **PENDING** — STA blocked (OpenSTA + Liberty unavailable) | `make sta` — requires OpenSTA + Liberty |
+|| `cordic_tb.sv` | All | Regression testbench: all prior tests + coverage merge | All modules | ⚠️ **PARTIAL** — toggle coverage 46% (< 85% target) | `make coverage` → report |
 
-**Gate 4 (Tape-Out Readiness):** STA clean, DRC/LVS clean (post-synthesis netlist), full regression passes, area < 20k gates (est).
+**Gate 4 (Tape-Out Readiness):** ⚠️ **NOT COMPLETE** — STA blocked (OpenSTA + Liberty unavailable), toggle coverage 46% (< 85% target). Full regression passes, area < 20k gates (est).
 
 ---
 
@@ -283,18 +283,20 @@ WAVE 1      WAVE 1
 
 ## Verification Strategy (Undergraduate ASIC Flow)
 
-| Level | Method | Tool | Gate |
-|-------|--------|------|------|
-| **Unit** | Directed + random + formal equivalence | Verilator / Yosys / SymbiYosys | Gates 1, 2 |
-| **Integration** | Co-simulation with Python golden model | Verilator + pytest | Gate 3 |
-| **Top-Level** | Self-checking testbench, coverage merge | Verilator | Gate 4 |
-| **Formal** | SVA assertions: overflow, valid/ready, x²+y² invariant | SymbiYosys (bounded) | Gates 0, 2 |
-| **STA** | Post-synthesis timing analysis | OpenSTA / vendor | Gate 4 |
-| **CDC** | None in V1 (single clock domain) | — | — |
+|| Level | Method | Tool | Gate |
+||-------|--------|------|------|
+|| **Unit** | Directed + random + formal equivalence | Verilator / Yosys / SymbiYosys | Gates 1, 2 |
+|| **Integration** | Co-simulation with Python golden model | Verilator + pytest | Gate 3 |
+|| **Top-Level** | Self-checking testbench, coverage merge | Verilator | Gate 4 |
+|| **Formal** | SVA assertions: overflow, valid/ready, x²+y² invariant | SymbiYosys (bounded) | Gates 0, 2 |
+|| **STA** | Post-synthesis timing analysis | OpenSTA / vendor | Gate 4 |
+|| **CDC** | None in V1 (single clock domain) | — | — |
 
 **Coverage Targets:** Statement > 95%, Branch > 90%, Toggle > 85%, FSM > 100%.
 
 **Golden Model:** Python `cordic_golden.py` — bit-exact fixed-point CORDIC reference for co-simulation.
+
+**Formal Status:** P4–P7 PASS (BMC depth 20). P1–P3 verified by simulation.
 
 ---
 

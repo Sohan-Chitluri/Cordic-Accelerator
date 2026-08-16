@@ -171,36 +171,55 @@ def cordic_golden(x, y, z, iterations=8, fract_w=12, saturate=True):
 
 | Assertion | Module | Type | Description |
 |-----------|--------|------|-------------|
-| `assert_valid_ready` | All | Protocol | `valid_in |-> ##[1:2] ready_out` |
-| `assert_no_overflow_sat` | `fp_add_sub` | Safety | `sat=1 -> |result| <= MAX_POS` |
-| `assert_x2y2_invariant` | `cordic_stage` | Functional | `x²+y² preserved` |
-| `assert_valid_latency` | `cordic_pipeline` | Protocol | `valid_in -> ##(N+2) valid_out` |
-| `assert_backpressure` | `cordic_pipeline` | Protocol | `!ready_in -> !ready_out` (1-cycle delay) |
-| `assert_config_handshake` | `cordic_top` | Protocol | `config_valid |-> ##1 config_ready` |
+| `p_reset_clears_valid` | `cordic_stage` | Reset | `!rst_n |=> !valid_out` |
+| `p_reset_clears_overflow` | `cordic_stage` | Reset | `!rst_n |=> !overflow` |
+| `p_sat_clamps_x` | `cordic_stage` | Safety | `sat && overflow |-> (x_out == MAX_POS || x_out == MIN_NEG)` |
+| `p_sat_clamps_y` | `cordic_stage` | Safety | `sat && overflow |-> (y_out == MAX_POS || y_out == MIN_NEG)` |
+| `p_valid_propagates` | `cordic_stage` | Protocol | `valid_in |=> valid_out` |
 
 ### 6.2 Formal Verification (SymbiYosys)
 
 ```yaml
-# symbiyosys_config.sby
+# tb/formal/cordic_formal.sby
 [options]
 mode bmc
 depth 20
-smtbmc
 
 [engines]
 smtbmc z3
 
 [script]
-read_verilog rtl/pkg/cordic_pkg.sv
-read_verilog rtl/fp_add_sub.sv
-read_verilog rtl/common/cordic_assertions.sv
-prep -top cordic_assertions
+read -formal -DFORMAL rtl/pkg/cordic_pkg.sv
+read -formal -DFORMAL rtl/fp_add_sub.sv
+read -formal -DFORMAL rtl/cordic_stage.sv
+read -formal -DFORMAL tb/formal/cordic_formal_tb.sv
+prep -top cordic_formal_tb
 
 [files]
-rtl/common/cordic_assertions.sv
+rtl/pkg/cordic_pkg.sv
+rtl/fp_add_sub.sv
+rtl/cordic_stage.sv
+tb/formal/cordic_formal_tb.sv
 ```
 
-**Run at Gates 0 and 2.**
+**Formal Properties Proven (BMC depth 20):**
+
+| Property | Description | Status |
+|----------|-------------|--------|
+| **P4** | `sat && overflow && valid_out → x_out clamped` | ✅ PASS |
+| **P5** | `sat && overflow && valid_out → y_out clamped` | ✅ PASS |
+| **P6** | `rst_n && valid_out → x_out in range` | ✅ PASS |
+| **P7** | `rst_n && valid_out → y_out in range` | ✅ PASS |
+
+**Simulation-Verified Properties (via `cordic_assertions.sv` + `ASSERT_ON`):**
+
+| Property | Description | Status |
+|----------|-------------|--------|
+| **P1** | Reset clears `valid_out` within 1 cycle | ✅ PASS (simulation) |
+| **P2** | Reset clears `overflow` within 1 cycle | ✅ PASS (simulation) |
+| **P3** | `valid_in` propagates to `valid_out` with 1-cycle latency | ✅ PASS (simulation) |
+
+> **Note:** P1–P3 are verified by simulation testbenches (all 5 unit/integration TBs pass). The SVA `property...endproperty` syntax is not supported by Yosys 0.67, so they are not included in the formal BMC run. P4–P7 are proven by bounded model checking (depth 20) using Z3.
 
 ---
 

@@ -65,18 +65,22 @@
 
 ### 2.4 `cordic_pipeline` Tests
 
-| Test ID | Description | Input | Expected |
-|---------|-------------|-------|----------|
-| PIP_001 | Sin/Cos 0° | x=1/K, y=0, z=0 | x≈1, y≈0 |
-| PIP_002 | Sin/Cos 45° | x=1/K, y=0, z=π/4 | x≈y≈0.707 |
-| PIP_003 | Sin/Cos 90° | x=1/K, y=0, z=π/2 | x≈0, y≈1 |
-| PIP_004 | Sin/Cos 180° | x=1/K, y=0, z=π | x≈-1, y≈0 |
-| PIP_005 | Random vector | 100 random (x,y,z) | Match golden < 0.15° |
-| PIP_006 | Back-to-back | 10 vectors continuous | valid_out every cycle |
-| PIP_007 | Backpressure 1-cycle | ready_in=0 for 1 cycle | ready_out deasserts 1 cycle later |
-| PIP_008 | Backpressure 5-cycle | ready_in=0 for 5 cycles | Pipeline stalls correctly |
-| PIP_009 | Config handshake | config_valid pulse | config_ready next cycle |
-| PIP_010 | Config applies next | Change ITERATIONS | Next vector uses new config |
+|| Test ID | Description | Input | Expected |
+||---------|-------------|-------|----------|
+|| PIP_001 | Sin/Cos 0° | x=1/K, y=0, z=0 | x≈1, y≈0 |
+|| PIP_002 | Sin/Cos 45° | x=1/K, y=0, z=π/4 | x≈y≈0.707 |
+|| PIP_003 | Sin/Cos 90° | x=1/K, y=0, z=π/2 | x≈0, y≈1 |
+|| PIP_004 | Sin/Cos 180° | x=1/K, y=0, z=π | x≈-1, y≈0 |
+|| PIP_005 | Random vector | 100 random (x,y,z) | Match golden < 0.15° |
+|| PIP_006 | Back-to-back | 10 vectors continuous | valid_out every cycle |
+|| PIP_007 | Backpressure 1-cycle | ready_in=0 for 1 cycle | ready_out deasserts 1 cycle later |
+|| PIP_008 | Backpressure 5-cycle | ready_in=0 for 5 cycles | Pipeline stalls correctly |
+|| PIP_009 | Config handshake | config_valid pulse | config_ready next cycle |
+|| PIP_010 | Config applies next | Change ITERATIONS | Next vector uses new config |
+|| PIP_011 | Saturation | x=MAX, y=MAX, z=0, sat=1 | overflow=1, outputs clamped |
+|| PIP_012 | Wrap mode | x=MAX, y=MAX, z=0, sat=0 | overflow=1, outputs wrapped |
+|| PIP_013 | Backpressure release | Stall then release | No data loss, no duplicates |
+|| PIP_014 | Sign transition | z_in crosses 0 | sigma toggles correctly |
 
 ### 2.5 `cordic_top` Tests
 

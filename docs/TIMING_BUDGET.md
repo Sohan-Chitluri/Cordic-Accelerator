@@ -9,12 +9,14 @@
 
 ## 1. Timing Budget Overview
 
-| Level | Target | Notes |
-|-------|--------|-------|
-| **Stage Critical Path** | ≤ 2.5 ns (400 MHz equivalent) | Per-stage budget |
-| **Pipeline Frequency** | Measured post-synthesis | No fixed Fmax target |
-| **Clock Uncertainty** | 10% period | Conservative for student flow |
-| **Setup/Hold Margin** | > 0 ns post-STA | Zero violations required |
+|| Level | Target | Notes |
+||-------|--------|-------|
+|| **Stage Critical Path** | ≤ 2.5 ns (400 MHz equivalent) | Per-stage budget |
+|| **Pipeline Frequency** | Measured post-synthesis | No fixed Fmax target |
+|| **Clock Uncertainty** | 10% period | Conservative for student flow |
+|| **Setup/Hold Margin** | > 0 ns post-STA | Zero violations required |
+
+**STA Status:** ⚠️ **PENDING** — OpenSTA not available in Nix environment; Sky130 Liberty required. Target: 100 MHz (10 ns period). STA scripts in `scripts/sta.tcl`, constraints in `constraints/cordic.sdc`.
 
 ---
 

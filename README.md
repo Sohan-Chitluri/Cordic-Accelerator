@@ -92,7 +92,7 @@ cordic-accelerator-asic/
 
 - **Verilator** ≥ 5.0 (simulation, lint)
 - **Yosys** ≥ 0.13 (synthesis)
-- **OpenSTA** ≥ 2.6 (static timing analysis)
+- **OpenSTA** ≥ 2.6 (static timing analysis) — *required for STA, not in Nix env*
 - **SymbiYosys** + Z3 (formal verification)
 - **Python** ≥ 3.9 (golden model, test vectors)
 - **GNU Make** ≥ 4.0
@@ -200,6 +200,8 @@ git checkout -b wave1-datapath   # Datapath agent
 **Coverage Targets:** Statement >95%, Branch >90%, Toggle >85%, FSM 100%
 
 **Golden Model:** Python `cordic_golden.py` — bit-exact fixed-point CORDIC reference for co-simulation
+
+**STA Status:** *Pending* — requires OpenSTA binary and Liberty library (e.g., Sky130 `sky130_fd_sc_hd__tt_025C_1v80.lib`). Target: 100 MHz (10 ns period). STA scripts in `scripts/sta.tcl`, constraints in `constraints/cordic.sdc`.
 
 ---
 
