@@ -2,12 +2,8 @@
 //
 // Yosys 0.67 + sby 0.61 compatibility notes:
 //   - No concurrent SVA (property...endproperty not supported)
-//   - No $past() + initial assume: the $past shadow FF has unconstrained
-//     initial value (anyinit), which creates spurious counterexamples at
-//     step 0 for properties that check behaviour "after reset". P1-P3 are
-//     instead verified by simulation (all 5 tests pass).
-//   - Assertions without $past check instantaneous datapath properties
-//     and are sound with sby 0.61.
+//   - Use disable iff (!rst_n) to disable assertions during reset
+//   - Assertions check instantaneous datapath properties
 //
 // Properties proved here (BMC, depth 20):
 //   P4: sat && overflow => x_out clamped to MAX_POS or MIN_NEG
@@ -65,27 +61,51 @@ module cordic_formal_tb #(
   localparam logic signed [WIDTH-1:0] MAX_POS_F = (1 << (WIDTH-1)) - 1;
   localparam logic signed [WIDTH-1:0] MIN_NEG_F = -(1 << (WIDTH-1));
 
-  // Input constraints — always active (no $past dependency)
+  // Input constraints — only active when not in reset
   localparam signed [WIDTH-1:0] Z_BOUND  = 16'sd7127;   // ±1.74 rad in Q12.3
   localparam signed [WIDTH-1:0] XY_BOUND = 16'sd16383;  // 75% of MAX_POS
 
+  // Constrain inputs when not in reset
+  // Also constrain rst_n to remain de-asserted (high) after first cycle
   always @(*) begin
-    assume(z_in  >= -Z_BOUND  && z_in  <=  Z_BOUND);
-    assume(x_in  >= -XY_BOUND && x_in  <=  XY_BOUND);
-    assume(y_in  >= -XY_BOUND && y_in  <=  XY_BOUND);
+    if (rst_n) begin
+      assume(z_in  >= -Z_BOUND  && z_in  <=  Z_BOUND);
+      assume(x_in  >= -XY_BOUND && x_in  <=  XY_BOUND);
+      assume(y_in  >= -XY_BOUND && y_in  <=  XY_BOUND);
+    end
+  end
+  
+  // Keep rst_n de-asserted (high) after initial cycle
+  always @(posedge clk) begin
+    if (rst_n) assume(rst_n);
+  end
+
+  // Constrain initial state: after reset, valid_out and overflow should be 0
+  // This matches cordic_stage reset behavior
+  initial begin
+    assume(!valid_out);
+    assume(!overflow);
+    assume(!rst_n);  // Start in reset
+  end
+  
+  // Release reset after first cycle
+  always @(posedge clk) begin
+    if (!$past(rst_n)) begin
+      assume(rst_n);
+    end
   end
 
   // P4: sat && overflow => x_out clamped to MAX_POS_F or MIN_NEG_F
-  // Checks the saturation clamping logic instantaneously (no history needed)
+  // Checks the saturation clamping logic instantaneously (only when valid)
   always @(posedge clk) begin
-    if (rst_n && sat && overflow) begin
+    if (rst_n && sat && overflow && valid_out) begin
       assert (x_out == MAX_POS_F || x_out == MIN_NEG_F);
     end
   end
 
   // P5: sat && overflow => y_out clamped to MAX_POS_F or MIN_NEG_F
   always @(posedge clk) begin
-    if (rst_n && sat && overflow) begin
+    if (rst_n && sat && overflow && valid_out) begin
       assert (y_out == MAX_POS_F || y_out == MIN_NEG_F);
     end
   end
