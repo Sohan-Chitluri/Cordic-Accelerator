@@ -35,7 +35,7 @@ package cordic_pkg;
   localparam cordic_data_t K_FACTOR = 16'sd2488;
 
   // atan(2^-i) × 2^FRACT_W reference table (FRACT_W=12).
-  // Values: 3217, 1934, 1016, 515, 258, 129, 64, 32 for i=0..7.
+  // Values: 3217, 1899, 1003, 509, 256, 128, 64, 32 for i=0..7.
   // cordic_stage embeds its own angle as a localparam nested-ternary for
   // maximum tool compatibility (avoids package-array indexing limitations).
 

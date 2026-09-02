@@ -36,11 +36,11 @@ module cordic_stage #(
   // Nested ternary for guaranteed elaboration-time constant folding in all tools.
   localparam logic signed [WIDTH-1:0] STAGE_ANGLE =
     (STAGE_IDX == 0) ? 16'sd3217 :   // 45.000°
-    (STAGE_IDX == 1) ? 16'sd1934 :   // 26.565°
-    (STAGE_IDX == 2) ? 16'sd1016 :   // 14.036°
-    (STAGE_IDX == 3) ? 16'sd515  :   //  7.125°
-    (STAGE_IDX == 4) ? 16'sd258  :   //  3.576°
-    (STAGE_IDX == 5) ? 16'sd129  :   //  1.790°
+    (STAGE_IDX == 1) ? 16'sd1899 :   // 26.565°
+    (STAGE_IDX == 2) ? 16'sd1003 :   // 14.036°
+    (STAGE_IDX == 3) ? 16'sd509  :   //  7.125°
+    (STAGE_IDX == 4) ? 16'sd256  :   //  3.576°
+    (STAGE_IDX == 5) ? 16'sd128  :   //  1.790°
     (STAGE_IDX == 6) ? 16'sd64   :   //  0.895°
                        16'sd32;      //  0.448° (STAGE_IDX == 7)
 
