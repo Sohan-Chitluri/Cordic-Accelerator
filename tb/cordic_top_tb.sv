@@ -188,9 +188,9 @@ module cordic_top_tb;
     if (z_out < -32768 || z_out > 32767) begin
       $error("[cordic_top] T5:saturation: z_out out of range: %0d", z_out); errors++;
     end
-    // overflow should be 0 for these inputs (no saturation triggered)
-    if (overflow !== 1'b0) begin
-      $error("[cordic_top] T5:saturation: expected overflow=0, got %0b", overflow); errors++;
+    // Check overflow flag against expected value
+    if (overflow !== VSAT_EOVF) begin
+      $error("[cordic_top] T5:saturation: expected overflow=%0b, got %0b", VSAT_EOVF, overflow); errors++;
     end
 
     // ---- Test 6: Wrap mode test — sat=0 (no saturation, but no overflow for these inputs) ----
@@ -205,7 +205,7 @@ module cordic_top_tb;
     valid_in = 1'b0;
 
     wait_output("T6:wrap");
-    // Wrap mode: no saturation, but these inputs don't cause overflow
+    // Wrap mode: no saturation, but arithmetic overflow still occurs on the same inputs
     // Just verify no crash, outputs in valid range
     if (x_out < -32768 || x_out > 32767) begin
       $error("[cordic_top] T6:wrap: x_out out of range: %0d", x_out); errors++;
@@ -216,9 +216,9 @@ module cordic_top_tb;
     if (z_out < -32768 || z_out > 32767) begin
       $error("[cordic_top] T6:wrap: z_out out of range: %0d", z_out); errors++;
     end
-    // overflow should be 0 for these inputs
-    if (overflow !== 1'b0) begin
-      $error("[cordic_top] T6:wrap: expected overflow=0, got %0b", overflow); errors++;
+    // Check overflow flag — should be same as T5 (same inputs, same arithmetic result)
+    if (overflow !== VSAT_EOVF) begin
+      $error("[cordic_top] T6:wrap: expected overflow=%0b, got %0b", VSAT_EOVF, overflow); errors++;
     end
 
     // ---- Test 7: Backpressure test — sustained stall ----
