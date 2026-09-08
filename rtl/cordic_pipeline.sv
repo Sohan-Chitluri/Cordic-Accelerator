@@ -76,24 +76,28 @@ module cordic_pipeline #(
 
   // ---------------------------------------------------------------------------
   // STAGE INTERCONNECT (N+1 entries: index 0 = input, index N = last stage out)
+  // stage_overflow_accum[i] = accumulated overflow from all stages 0..i-1
   // ---------------------------------------------------------------------------
   logic signed [WIDTH-1:0] stage_x [0:ITERATIONS];
   logic signed [WIDTH-1:0] stage_y [0:ITERATIONS];
   logic signed [WIDTH-1:0] stage_z [0:ITERATIONS];
   logic         stage_valid    [0:ITERATIONS];
   logic         stage_overflow [0:ITERATIONS];
+  logic         stage_overflow_accum [0:ITERATIONS];
 
   // Input stage: K-prescaled x/y, raw z, valid gated with ready
   logic ready_out_int;
 
-  assign stage_x[0]        = lut_k_x;
-  assign stage_y[0]        = lut_k_y;
-  assign stage_z[0]        = z_in;
-  assign stage_valid[0]    = valid_in & ready_out_int;
-  assign stage_overflow[0] = 1'b0;
+  assign stage_x[0]              = lut_k_x;
+  assign stage_y[0]              = lut_k_y;
+  assign stage_z[0]              = z_in;
+  assign stage_valid[0]          = valid_in & ready_out_int;
+  assign stage_overflow[0]       = 1'b0;
+  assign stage_overflow_accum[0] = 1'b0;  // No overflow before any stages
 
   // ---------------------------------------------------------------------------
   // CORDIC STAGE CHAIN (generate)
+  // Overflow accumulates through the pipeline: accum[i+1] = accum[i] | ovf[i]
   // ---------------------------------------------------------------------------
   for (genvar i = 0; i < ITERATIONS; i++) begin : g_stages
     cordic_stage #(
@@ -114,6 +118,11 @@ module cordic_pipeline #(
       .valid_out(stage_valid[i+1]),
       .overflow (stage_overflow[i+1])
     );
+
+    // Pipeline accumulated overflow: OR current stage overflow with accumulated overflow
+    // This accumulation happens combinatorially within this loop, then gets latched
+    // in the output register at the appropriate time.
+    assign stage_overflow_accum[i+1] = stage_overflow_accum[i] | stage_overflow[i+1];
   end
 
   // ---------------------------------------------------------------------------
@@ -137,6 +146,9 @@ module cordic_pipeline #(
 
   // ---------------------------------------------------------------------------
   // OUTPUT REGISTER
+  // Overflow from stage_overflow_accum[ITERATIONS] = accumulated overflow from
+  // all stages, matching the golden model where overflow is ORed across all
+  // CORDIC iterations.
   // ---------------------------------------------------------------------------
   always_ff @(posedge clk) begin
     if (!rst_n) begin
@@ -151,7 +163,7 @@ module cordic_pipeline #(
       y_out     <= stage_y[ITERATIONS];
       z_out     <= stage_z[ITERATIONS];
       valid_out <= stage_valid[ITERATIONS];
-      overflow  <= stage_overflow[ITERATIONS];
+      overflow  <= stage_overflow_accum[ITERATIONS];
       irq       <= stage_valid[ITERATIONS];   // pulse on each valid output
     end
   end
