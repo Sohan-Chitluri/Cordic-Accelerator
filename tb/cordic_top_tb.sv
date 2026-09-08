@@ -19,8 +19,10 @@ localparam cordic_data_t V1_EX  = 16'sd2918, V1_EY = 16'sd2876, V1_EZ = 16'sd29;
 localparam logic         V1_EOVF = 1'b0;
 
 // Known vector 2: 0° rotation (z=0, convergence residual stays in x/y)
+// Expected values computed from golden_model.py CordicGoldenModel
+// z_out=-30 (residual angle ~-0.007 rad after 8 iterations from z=0)
 localparam cordic_data_t V2_X   = 16'sd4096, V2_Y = 16'sd0,   V2_Z = 16'sd0;
-localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd29, V2_EZ = 16'sd23;
+localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd29, V2_EZ = -16'sd30;
 localparam logic         V2_EOVF = 1'b0;
 
 // Saturation test vector: inputs that cause overflow in CORDIC stages
