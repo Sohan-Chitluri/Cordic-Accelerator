@@ -28,6 +28,11 @@
           z3
           sby
           git
+
+          # P&R and DRC tools
+          magic-vlsi
+          netgen
+          # openroad (may need to be built separately)
         ];
 
         shellHook = ''
