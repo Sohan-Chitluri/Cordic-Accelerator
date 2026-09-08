@@ -12,8 +12,10 @@
 import cordic_pkg::*;
 
 // Known vector 1: 45° rotation
+// Expected values computed from golden_model.py CordicGoldenModel
+// z_out=29 (residual angle ~0.007 rad after 8 iterations)
 localparam cordic_data_t V1_X   = 16'sd4096, V1_Y = 16'sd0,    V1_Z = 16'sd3217;
-localparam cordic_data_t V1_EX  = 16'sd2918, V1_EY = 16'sd2876, V1_EZ = 16'sd16;
+localparam cordic_data_t V1_EX  = 16'sd2918, V1_EY = 16'sd2876, V1_EZ = 16'sd29;
 localparam logic         V1_EOVF = 1'b0;
 
 // Known vector 2: 0° rotation (z=0, convergence residual stays in x/y)
