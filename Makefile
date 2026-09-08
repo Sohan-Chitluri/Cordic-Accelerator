@@ -234,6 +234,43 @@ formal:
 	@echo "=== Formal Verification Complete ==="
 
 # -----------------------------------------------------------------------------
+# PLACE & ROUTE (Open-source flow)
+# Note: Requires OpenROAD, Magic, and Netgen
+# Install with: nix flake update && nix develop
+# Or provide PDK and constraint files for commercial tools
+# -----------------------------------------------------------------------------
+.PHONY: pr
+pr:
+	@echo "=== Open-source P&R Flow Not Configured ==="
+	@echo "To complete P&R, you have two options:"
+	@echo ""
+	@echo "Option 1: Install open-source tools"
+	@echo "  - OpenROAD: https://github.com/The-OpenROAD-Project"
+	@echo "  - Magic: http://opencircuitdesign.com/magic/"
+	@echo "  - Netgen: http://opencircuitdesign.com/netgen/"
+	@echo ""
+	@echo "Option 2: Use commercial tools with synthesized netlist"
+	@echo "  - Input: $(OUTPUT_DIR)/cordic_top_synth.v"
+	@echo "  - Requires: PDK + Cadence Innovus/Synopsys ICC2"
+	@echo ""
+	@echo "Synthesized netlist ready at: $(OUTPUT_DIR)/cordic_top_synth.v"
+	@echo "=== P&R Ready ==="
+
+.PHONY: drc
+drc:
+	@echo "=== DRC/LVS Flow Not Configured ==="
+	@echo "To run DRC and LVS checks, you need:"
+	@echo ""
+	@echo "Open-source:"
+	@echo "  - Magic: Design Rule Checking"
+	@echo "  - Netgen: Layout vs Schematic verification"
+	@echo ""
+	@echo "Commercial:"
+	@echo "  - Cadence Assura or Calibre"
+	@echo ""
+	@echo "Available: Synthesized netlist at $(OUTPUT_DIR)/cordic_top_synth.v"
+
+# -----------------------------------------------------------------------------
 # PYTHON GOLDEN MODEL
 # -----------------------------------------------------------------------------
 .PHONY: golden
@@ -288,6 +325,10 @@ help:
 	@echo "Synthesis & STA:"
 	@echo "  make synth         - Run Yosys synthesis"
 	@echo "  make sta           - Run OpenSTA timing analysis"
+	@echo ""
+	@echo "Physical Design (requires external P&R tool):"
+	@echo "  make pr            - Show P&R flow options"
+	@echo "  make drc           - Show DRC/LVS flow options"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean         - Remove build artifacts"
