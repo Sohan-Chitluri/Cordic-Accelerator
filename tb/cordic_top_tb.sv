@@ -25,10 +25,12 @@ localparam cordic_data_t V2_X   = 16'sd4096, V2_Y = 16'sd0,   V2_Z = 16'sd0;
 localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd29, V2_EZ = -16'sd30;
 localparam logic         V2_EOVF = 1'b0;
 
-// Saturation test vector: inputs that cause overflow in CORDIC stages
-// Using values similar to cordic_stage_tb T3: x=30000, y=5000 causes y-path saturation
+// Saturation test vector: tests pipeline with large but valid inputs.
+// Note: cordic_stage_tb tests stage 0 directly without K-prescaling, but
+// cordic_pipeline applies K-prescale (×0.607) first, so these inputs do NOT
+// cause overflow after prescaling (18223+3037 < 32767). Golden model confirms overflow=0.
 localparam cordic_data_t VSAT_X = 16'sd30000, VSAT_Y = 16'sd5000, VSAT_Z = 16'sd100;
-localparam logic         VSAT_EOVF = 1'b1;  // Expect overflow
+localparam logic         VSAT_EOVF = 1'b0;  // No overflow after K-prescale
 
 localparam int VALID_DEPTH = ITERATIONS + 2;  // 10
 localparam int TIMEOUT     = VALID_DEPTH + 6; // 16 — generous margin
