@@ -28,7 +28,12 @@ VERILATOR_FLAGS := --lint-only -Wall -Wno-UNUSED -Wno-PINCONNECTEMPTY -Wno-DECLF
                    --sv
 
 YOSYS           := yosys
-OPENSTA         := sta
+# Standalone OpenSTA build — kept even though nixpkgs' `openroad` (which
+# bundles OpenSTA) now also builds, since this project's STA flow already
+# depends on it directly and it's a much smaller build. See
+# docs/PLACE_ROUTE_DRC.md. Built via tools/build_opensta.sh.
+OPENSTA         := tools/OpenSTA/build/sta
+OPENROAD        := openroad
 
 # Simulation
 SIM_TOOL        := verilator
@@ -241,20 +246,12 @@ formal:
 # -----------------------------------------------------------------------------
 .PHONY: pr
 pr:
-	@echo "=== Open-source P&R Flow Not Configured ==="
-	@echo "To complete P&R, you have two options:"
-	@echo ""
-	@echo "Option 1: Install open-source tools"
-	@echo "  - OpenROAD: https://github.com/The-OpenROAD-Project"
-	@echo "  - Magic: http://opencircuitdesign.com/magic/"
-	@echo "  - Netgen: http://opencircuitdesign.com/netgen/"
-	@echo ""
-	@echo "Option 2: Use commercial tools with synthesized netlist"
-	@echo "  - Input: $(OUTPUT_DIR)/cordic_top_synth.v"
-	@echo "  - Requires: PDK + Cadence Innovus/Synopsys ICC2"
-	@echo ""
-	@echo "Synthesized netlist ready at: $(OUTPUT_DIR)/cordic_top_synth.v"
-	@echo "=== P&R Ready ==="
+	@echo "=== Running OpenROAD P&R (Sky130 HD) ==="
+	@mkdir -p $(OUTPUT_DIR)
+	$(OPENROAD) -no_init -exit -log $(OUTPUT_DIR)/pr.log $(SCRIPTS_DIR)/pr.tcl
+	@echo "=== P&R Complete ==="
+	@echo "  Routed DEF:      $(OUTPUT_DIR)/cordic_top_routed.def"
+	@echo "  Routed netlist:  $(OUTPUT_DIR)/cordic_top_routed.v"
 
 .PHONY: drc
 drc:

@@ -2,11 +2,59 @@
 
 ## Current Status
 
-✅ **Synthesis Complete**: `output/cordic_top_synth.v` (38 KB, gate-level netlist)  
-✅ **Formal Verification**: All assertions pass  
-✅ **RTL Simulation**: 9/9 tests pass  
+✅ **Synthesis Complete**: `output/cordic_top_synth.v`, mapped to Sky130 HD standard cells
+   (`sky130_fd_sc_hd__*`), 3979 cells (454 `dfxtp_1` flip-flops)
+✅ **Formal Verification**: All assertions pass
+✅ **RTL Simulation**: 9/9 tests pass
+✅ **Static Timing Analysis**: Runs clean via standalone OpenSTA against the Sky130 HD
+   `tt_025C_1v80` corner. Result: **WNS -1.08 ns / TNS -33.22 ns** at the 100 MHz target — timing
+   is not yet closed pre-layout. See `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for the full
+   breakdown and `output/sta_checks.rpt` for the worst path.
 
-⏳ **P&R & DRC**: Requires external tools (not in open-source environment)
+⏳ **P&R & DRC**: Magic and Netgen are available via `nix develop`. `nixpkgs#openroad` now builds
+   (previously blocked, see "Toolchain Setup" below) — P&R itself has not been run yet.
+
+---
+
+## Toolchain Setup (this environment)
+
+`flake.nix` provides `verilator`, `yosys`, `magic-vlsi`, `netgen`, and the build dependencies for
+standalone OpenSTA (`cmake`, `tcl`, `cudd`, `eigen`, `swig`, `flex`, `bison`, `gtest`). Enter the
+shell with `nix develop`.
+
+**OpenSTA** is not in `nixpkgs` as a standalone package. `nixpkgs`'s `openroad` package (which
+normally bundles it) previously failed to build: one of its dependencies, `or-tools`, pulled in
+`pybind11`, whose bundled test suite failed under Python 3.14. That was an upstream nixpkgs
+packaging issue (pybind11 2.13.6 was pinned by `or-tools`, and only pybind11 ≥3.0.0 supports
+Python 3.14), and it has since been fixed and merged upstream — nixpkgs PR
+[#551898](https://github.com/NixOS/nixpkgs/pull/551898), merged 2026-09-07. This flake's
+`flake.lock` has been bumped past that fix, and `nix build nixpkgs#openroad` now succeeds
+(verified 2026-09-17). We still build OpenSTA standalone below rather than switching to
+`nixpkgs#openroad` for timing analysis, since OpenSTA alone is a much smaller build and this
+project's STA flow already depends on it directly:
+
+```bash
+nix develop
+./tools/build_opensta.sh      # builds tools/OpenSTA/build/sta
+```
+
+**Sky130 PDK** (Liberty timing libraries) is fetched via `volare` (not in `nixpkgs`, installed
+into a local venv):
+
+```bash
+nix develop
+python3 -m venv .venv && source .venv/bin/activate
+pip install volare
+volare fetch --pdk sky130 <version>   # see `volare ls-remote --pdk sky130`
+ln -sfn ~/.volare/volare/sky130/versions/<version>/sky130A/libs.ref/sky130_fd_sc_hd/lib \
+  pdk/sky130_fd_sc_hd_lib
+```
+
+Both `tools/OpenSTA/` and `pdk/` are gitignored — local, machine-specific build/fetch outputs,
+not part of the repo.
+
+**OpenROAD (P&R)** is now buildable via `nixpkgs#openroad` (confirmed 2026-09-17, see above). It
+hasn't been wired into this project's flow yet; standalone OpenSTA remains the STA tool in use.
 
 ---
 
@@ -266,10 +314,10 @@ report_checks -path_delay max
 | Step | Tool | Status | Notes |
 |------|------|--------|-------|
 | RTL Simulation | Verilator | ✅ PASS | 9/9 tests |
-| Synthesis | Yosys | ✅ PASS | Gate-level netlist ready |
+| Synthesis | Yosys | ✅ PASS | Gate-level netlist, Sky130 HD mapped |
 | Formal Verification | SymbiYosys | ✅ PASS | All assertions verified |
-| Timing Analysis | OpenSTA | ⏳ Optional | Can run post-P&R |
-| P&R | OpenROAD | ⏳ Pending | Awaiting setup/PDK |
+| Timing Analysis | OpenSTA | ⚠️ **FAIL** | WNS -1.08 ns @ 100 MHz target (pre-layout) |
+| P&R | OpenROAD | ⏳ Pending | `nixpkgs#openroad` now builds (fix merged upstream); P&R not yet run |
 | DRC | Magic | ⏳ Pending | Post-P&R step |
 | LVS | Netgen | ⏳ Pending | Post-P&R step |
 | GDSII | Tool-specific | ⏳ Pending | Final deliverable |

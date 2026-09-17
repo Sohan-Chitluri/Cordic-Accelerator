@@ -43,7 +43,9 @@ set_output_delay -clock clk -min 0.5 [get_ports config_ready]
 # -----------------------------------------------------------------------------
 # RESET
 # -----------------------------------------------------------------------------
-set_dont_touch_network [get_ports rst_n]
+# set_dont_touch_network is a Synopsys/Cadence-only command with no OpenSTA
+# equivalent; rst_n has no clock-tree-style buffering concern in a P&R-less
+# pre-layout STA flow, so it is simply omitted here.
 
 # -----------------------------------------------------------------------------
 # FALSE PATHS (none in V1 - single clock domain)

@@ -201,7 +201,13 @@ git checkout -b wave1-datapath   # Datapath agent
 
 **Golden Model:** Python `cordic_golden.py` — bit-exact fixed-point CORDIC reference for co-simulation
 
-**STA Status:** *Pending* — requires OpenSTA binary and Liberty library (e.g., Sky130 `sky130_fd_sc_hd__tt_025C_1v80.lib`). Target: 100 MHz (10 ns period). STA scripts in `scripts/sta.tcl`, constraints in `constraints/cordic.sdc`.
+**STA Status:** Runs clean via standalone OpenSTA against Sky130 HD (`sky130_fd_sc_hd__tt_025C_1v80.lib`), pre-layout. Target 100 MHz (10 ns period) is **not yet met**: WNS -1.08 ns / TNS -33.22 ns (worst path is the `fp_add_sub` carry chain; implied Fmax ~90 MHz pre-layout). See `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 and `docs/PLACE_ROUTE_DRC.md` for details and toolchain setup. STA scripts in `scripts/sta.tcl`, constraints in `constraints/cordic.sdc`.
+
+**V2 / Deferred Scope:** Runtime-variable iteration count (`cfg_iterations` port exists but is
+currently unused — V1 is hardwired to 8 iterations) and multi-stage pipeline folding (packing
+multiple CORDIC iterations per pipeline register stage, e.g. 3 stages instead of 8) are both
+analyzed only, not implemented — see `docs/V2_PARAMETERIZATION_ANALYSIS.md`. They are explicitly
+out of scope for the V1 tape-out target.
 
 ---
 

@@ -212,10 +212,36 @@ endpackage
 || Module | Owner | Scope | Dependencies | Exit Criteria | Verification |
 ||--------|-------|-------|--------------|---------------|--------------|
 || `cordic_top.sv` | Lead | Top-level: `cordic_pipeline` + config handshake + I/O registers + IRQ | `cordic_pipeline`, `cordic_pkg` | ✅ Integration clean, all ports connected, synthesis passes | Full top-level testbench, CDC check (none in V1), reset sequence |
-|| `cordic.sdc` | Lead | Clock definition, input/output delays (set_input_delay/set_output_delay), clock uncertainty | `cordic_top` | ⚠️ **PENDING** — STA blocked (OpenSTA + Liberty unavailable) | `make sta` — requires OpenSTA + Liberty |
+|| `cordic.sdc` | Lead | Clock definition, input/output delays (set_input_delay/set_output_delay), clock uncertainty | `cordic_top` | ✅ **DONE** — STA runs clean against Sky130 HD (tt_025C_1v80); see below | `make sta` |
 || `cordic_tb.sv` | All | Regression testbench: all prior tests + coverage merge | All modules | ⚠️ **PARTIAL** — toggle coverage 46% (< 85% target) | `make coverage` → report |
 
-**Gate 4 (Tape-Out Readiness):** ⚠️ **NOT COMPLETE** — STA blocked (OpenSTA + Liberty unavailable), toggle coverage 46% (< 85% target). Full regression passes, area < 20k gates (est).
+**Gate 4 (Tape-Out Readiness):** ⚠️ **NOT COMPLETE** — toggle coverage 46% (< 85% target); STA shows the design does not close timing at the 100 MHz / 10 ns target (see below). P&R not yet run (tool availability, see below). Full regression passes, area < 20k gates (est).
+
+**STA Results (2026-09-16, pre-layout, Sky130 HD `tt_025C_1v80` corner, zero-wireload):**
+
+| Metric | Value |
+|--------|-------|
+| Target clock period | 10.00 ns (100 MHz) |
+| Worst negative slack (WNS) | **-1.08 ns** |
+| Total negative slack (TNS) | -33.22 ns |
+| Implied Fmax (pre-layout, no parasitics) | ~90 MHz |
+
+Worst path is the combinational carry chain inside `fp_add_sub` (17-bit ripple-style adder,
+`x_in[1]` → internal register), driven through ~17 `maj3_1`/`xnor3_1` cells. This is a
+pre-layout, zero-parasitic estimate — post-layout numbers (after real P&R) will be worse, not
+better. Two paths forward: relax the target clock (~11.1 ns / ~90 MHz), or restructure the
+adder's carry path (e.g. explicit carry-lookahead/carry-select in `fp_add_sub.sv`, which the
+module name already implies but the current implementation doesn't fully exploit for a 17-bit
+sum). Full report: `output/sta_checks.rpt`, `output/sta_tns.rpt`, `output/sta_wns.rpt`.
+
+**Toolchain note:** `nixpkgs`'s `openroad` package currently fails to build on this
+`nixpkgs-unstable` revision — one of its dependencies (`or-tools`, via `pybind11`'s bundled
+test suite) fails under Python 3.14, an upstream nixpkgs packaging issue unrelated to this
+design. STA was unblocked by building **standalone OpenSTA** from source instead (OpenSTA has
+no `or-tools` dependency) via `tools/build_opensta.sh`; see `docs/PLACE_ROUTE_DRC.md`. Actual
+P&R (OpenROAD) remains blocked until that upstream issue is fixed, Docker becomes available in
+this environment, or OpenROAD is built from source directly (a much larger undertaking than
+OpenSTA — not yet attempted).
 
 ---
 
