@@ -215,33 +215,57 @@ endpackage
 || `cordic.sdc` | Lead | Clock definition, input/output delays (set_input_delay/set_output_delay), clock uncertainty | `cordic_top` | ✅ **DONE** — STA runs clean against Sky130 HD (tt_025C_1v80); see below | `make sta` |
 || `cordic_tb.sv` | All | Regression testbench: all prior tests + coverage merge | All modules | ⚠️ **PARTIAL** — toggle coverage 46% (< 85% target) | `make coverage` → report |
 
-**Gate 4 (Tape-Out Readiness):** ⚠️ **NOT COMPLETE** — toggle coverage 46% (< 85% target); STA shows the design does not close timing at the 100 MHz / 10 ns target (see below). P&R not yet run (tool availability, see below). Full regression passes, area < 20k gates (est).
+**Gate 4 (Tape-Out Readiness):** ⚠️ **NOT COMPLETE** — the full RTL→GDSII physical flow (synthesis,
+P&R, DRC, LVS) now runs clean end-to-end (see below), but **timing is not closed** at the 100 MHz
+/ 10 ns target, pre- or post-layout, and toggle coverage is 46% (< 85% target).
 
-**STA Results (2026-09-16, pre-layout, Sky130 HD `tt_025C_1v80` corner, zero-wireload):**
+**STA Results, pre-layout (2026-09-16, Sky130 HD `tt_025C_1v80` corner, zero-wireload):**
 
 | Metric | Value |
 |--------|-------|
 | Target clock period | 10.00 ns (100 MHz) |
-| Worst negative slack (WNS) | **-1.08 ns** |
+| Worst negative slack (WNS) | -1.08 ns |
 | Total negative slack (TNS) | -33.22 ns |
-| Implied Fmax (pre-layout, no parasitics) | ~90 MHz |
+| Implied Fmax | ~90 MHz |
 
-Worst path is the combinational carry chain inside `fp_add_sub` (17-bit ripple-style adder,
-`x_in[1]` → internal register), driven through ~17 `maj3_1`/`xnor3_1` cells. This is a
-pre-layout, zero-parasitic estimate — post-layout numbers (after real P&R) will be worse, not
-better. Two paths forward: relax the target clock (~11.1 ns / ~90 MHz), or restructure the
-adder's carry path (e.g. explicit carry-lookahead/carry-select in `fp_add_sub.sv`, which the
-module name already implies but the current implementation doesn't fully exploit for a 17-bit
-sum). Full report: `output/sta_checks.rpt`, `output/sta_tns.rpt`, `output/sta_wns.rpt`.
+**P&R Results, post-route (2026-09-17, OpenROAD, Sky130 HD):**
 
-**Toolchain note:** `nixpkgs`'s `openroad` package currently fails to build on this
-`nixpkgs-unstable` revision — one of its dependencies (`or-tools`, via `pybind11`'s bundled
-test suite) fails under Python 3.14, an upstream nixpkgs packaging issue unrelated to this
-design. STA was unblocked by building **standalone OpenSTA** from source instead (OpenSTA has
-no `or-tools` dependency) via `tools/build_opensta.sh`; see `docs/PLACE_ROUTE_DRC.md`. Actual
-P&R (OpenROAD) remains blocked until that upstream issue is fixed, Docker becomes available in
-this environment, or OpenROAD is built from source directly (a much larger undertaking than
-OpenSTA — not yet attempted).
+| Metric | Value |
+|--------|-------|
+| Design area | 34,405 µm² (43% utilization) |
+| Worst negative slack (WNS) | -0.58 ns |
+| Total negative slack (TNS) | -16.77 ns |
+| Standard cells | 4,107 logic cells + 454 `dfxtp_1` flip-flops (+ tap/filler cells) |
+
+Worst path (pre-layout) is the combinational carry chain inside `fp_add_sub` (17-bit ripple-style
+adder, `x_in[1]` → internal register), driven through ~17 `maj3_1`/`xnor3_1` cells. Two paths
+forward to close timing: relax the target clock (~11.1 ns / ~90 MHz), or restructure the adder's
+carry path (e.g. explicit carry-lookahead/carry-select in `fp_add_sub.sv`, which the module name
+already implies but the current implementation doesn't fully exploit for a 17-bit sum). Full
+reports: `output/sta_checks.rpt` (pre-layout), `output/pr.log` (post-route).
+
+**DRC Results (Magic, Sky130 HD, 2026-09-17):** ✅ **0 violations.** Initial runs found 4 N-well
+width/spacing violations (`nwell.1`, `nwell.2a`), traced to gaps between standard cells in a row
+(placement legalizes non-overlap, not full abutment, which breaks the row's shared N-well strip)
+— not, as first suspected, missing well-tap cells. Fixed by adding `filler_placement` to
+`scripts/pr.tcl` after CTS. GDSII exported to `output/cordic_top.gds`.
+
+**LVS Results (Netgen, 2026-09-17):** ✅ **Netlists match uniquely** (devices 4107=4107, nets
+4134=4134, exact) between the Magic-extracted layout and OpenROAD's post-route netlist. The one
+LVS-reported "error" — `valid_out` and `irq` electrically shorted — is an intentional RTL design
+choice (`cordic_pipeline.sv` drives both from the same `valid_pipe[8]` signal; `irq` mirrors
+`valid_out` by design), not a routing bug. Filler/tap cells were excluded from the comparison
+(see `docs/PLACE_ROUTE_DRC.md` for why). Comparison must be against the **post-route** netlist,
+not the pre-P&R synthesized one — clock tree synthesis inserts buffers (13 `clkinv_1` here) that
+only exist after P&R. Full report: `output/lvs_report.txt`.
+
+**Toolchain note:** `nixpkgs`'s `openroad` package failed to build on this project's original
+`nixpkgs-unstable` pin (an `or-tools`→`pybind11` test-suite failure under Python 3.14, unrelated
+to this design); the flake's nixpkgs input has since been bumped past the upstream fix
+(nixpkgs PR #551898) and `openroad` now builds directly. Standalone OpenSTA
+(`tools/build_opensta.sh`) is kept anyway since it's a much smaller build for the STA-only use
+case. See `docs/PLACE_ROUTE_DRC.md` for full toolchain setup, including the `netgen` vs.
+`netgen-vlsi` nixpkgs name collision (plain `netgen` is an unrelated FEM mesh generator).
 
 ---
 

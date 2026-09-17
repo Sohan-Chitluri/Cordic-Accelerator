@@ -125,11 +125,20 @@ make test-vectors
 # Run simulation with coverage
 make coverage
 
-# Yosys synthesis (generic library)
+# Yosys synthesis (Sky130 HD standard cells)
 make synth
 
 # Static timing analysis (requires synthesized netlist)
 make sta
+
+# Place & route (OpenROAD, requires synthesized netlist)
+make pr
+
+# Design rule check + GDSII export (Magic, requires routed DEF)
+make drc
+
+# Layout vs. schematic (Magic extraction + Netgen, requires routed DEF)
+make lvs
 
 # Formal verification (SymbiYosys)
 make formal
@@ -201,7 +210,13 @@ git checkout -b wave1-datapath   # Datapath agent
 
 **Golden Model:** Python `cordic_golden.py` — bit-exact fixed-point CORDIC reference for co-simulation
 
-**STA Status:** Runs clean via standalone OpenSTA against Sky130 HD (`sky130_fd_sc_hd__tt_025C_1v80.lib`), pre-layout. Target 100 MHz (10 ns period) is **not yet met**: WNS -1.08 ns / TNS -33.22 ns (worst path is the `fp_add_sub` carry chain; implied Fmax ~90 MHz pre-layout). See `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 and `docs/PLACE_ROUTE_DRC.md` for details and toolchain setup. STA scripts in `scripts/sta.tcl`, constraints in `constraints/cordic.sdc`.
+**Physical Implementation Status:** Full RTL→GDSII flow (synthesis → STA → P&R → DRC → LVS) runs
+clean via `make synth sta pr drc lvs` against Sky130 HD. DRC: **0 violations**. LVS: **netlists
+match uniquely** (layout vs. post-route netlist). Timing is **not yet closed** at the 100 MHz
+(10 ns) target: pre-layout WNS -1.08 ns / TNS -33.22 ns (~90 MHz implied Fmax; worst path is the
+`fp_add_sub` carry chain), post-route WNS -0.58 ns / TNS -16.77 ns. See
+`CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 and `docs/PLACE_ROUTE_DRC.md` for full results and
+toolchain setup.
 
 **V2 / Deferred Scope:** Runtime-variable iteration count (`cfg_iterations` port exists but is
 currently unused — V1 is hardwired to 8 iterations) and multi-stage pipeline folding (packing

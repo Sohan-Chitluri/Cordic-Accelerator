@@ -34,7 +34,9 @@
           # P&R, DRC / LVS
           openroad
           magic-vlsi
-          netgen
+          # nixpkgs' plain `netgen` is the NGSolve FEM mesh generator, not the
+          # VLSI LVS tool from opencircuitdesign — that's `netgen-vlsi`.
+          netgen-vlsi
 
           # Build deps for standalone OpenSTA (built from source into ./tools/opensta,
           # see docs/PLACE_ROUTE_DRC.md). We build OpenSTA directly rather than pulling

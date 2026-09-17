@@ -31,5 +31,9 @@ gds write output/cordic_top.gds
 puts "=== Magic DRC + GDS Complete ==="
 puts "  DRC report: output/cordic_top_drc.rpt"
 puts "  GDSII:      output/cordic_top.gds"
+puts "  For LVS, see scripts/lvs_extract.tcl (a separate, LEF-only"
+puts "  extraction pass — this script's real cell GDS geometry, needed"
+puts "  for DRC/GDS export, makes extraction descend into transistor-level"
+puts "  detail inside standard cells, which is wrong for LVS matching)."
 
 quit -noprompt

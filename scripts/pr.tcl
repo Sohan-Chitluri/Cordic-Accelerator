@@ -93,6 +93,15 @@ clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_4 -buf_list sky130_fd_sc_
 detailed_placement
 
 # -----------------------------------------------------------------------------
+# FILLER CELLS
+# Detailed placement legalizes cell positions but doesn't require rows to be
+# fully abutted — leftover gaps between cells break the continuous N-well
+# strip each row shares, which fails Sky130 nwell width/spacing DRC (nwell.1,
+# nwell.2a). Filling every gap restores a continuous row.
+# -----------------------------------------------------------------------------
+filler_placement {sky130_fd_sc_hd__fill_1 sky130_fd_sc_hd__fill_2 sky130_fd_sc_hd__fill_4 sky130_fd_sc_hd__fill_8}
+
+# -----------------------------------------------------------------------------
 # ROUTING
 # -----------------------------------------------------------------------------
 global_route

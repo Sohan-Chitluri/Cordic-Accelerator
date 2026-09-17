@@ -15,6 +15,12 @@ SCRIPTS_DIR     := scripts
 OUTPUT_DIR      := output
 ABS_OUTPUT      := $(abspath $(OUTPUT_DIR))
 
+# Sky130 PDK root (volare-fetched build), used by `make drc`/`make lvs` for
+# Magic's/Netgen's tech setup files. Override on the command line if your
+# volare version differs, e.g.:
+#   make drc PDK_ROOT=~/.volare/volare/sky130/versions/<other-hash>
+PDK_ROOT        ?= $(HOME)/.volare/volare/sky130/versions/a519523b0d9bc913a6f87a5eed083597ed9e2e93
+
 # Tool configuration
 VERILATOR       := verilator
 # -Wno-VARHIDDEN: modules intentionally re-expose package params (WIDTH, FRACT_W,
@@ -255,17 +261,41 @@ pr:
 
 .PHONY: drc
 drc:
-	@echo "=== DRC/LVS Flow Not Configured ==="
-	@echo "To run DRC and LVS checks, you need:"
-	@echo ""
-	@echo "Open-source:"
-	@echo "  - Magic: Design Rule Checking"
-	@echo "  - Netgen: Layout vs Schematic verification"
-	@echo ""
-	@echo "Commercial:"
-	@echo "  - Cadence Assura or Calibre"
-	@echo ""
-	@echo "Available: Synthesized netlist at $(OUTPUT_DIR)/cordic_top_synth.v"
+	@echo "=== Running Magic DRC + GDSII export (Sky130 HD) ==="
+	@mkdir -p $(OUTPUT_DIR)
+	PDK_ROOT=$(PDK_ROOT) magic -noconsole -dnull \
+		-rcfile $(PDK_ROOT)/sky130A/libs.tech/magic/sky130A.magicrc \
+		$(SCRIPTS_DIR)/drc.tcl
+	@echo "=== DRC Complete ==="
+
+# -----------------------------------------------------------------------------
+# LVS (Layout vs. Schematic)
+# Compares the Magic-extracted layout netlist against OpenROAD's post-route
+# netlist (not the pre-P&R synthesized one — clock tree synthesis inserts
+# buffers that only exist post-P&R). Filler/tap cells are stripped from both
+# sides first: they have no signal pins, so LVS can't meaningfully match
+# them by topology, and their exact counts are a P&R algorithm detail, not
+# part of the design's logical intent. See docs/PLACE_ROUTE_DRC.md.
+# -----------------------------------------------------------------------------
+.PHONY: lvs
+lvs:
+	@echo "=== Extracting layout netlist (Magic, LEF-only cells) ==="
+	@mkdir -p $(OUTPUT_DIR)/lvs_extract
+	PDK_ROOT=$(PDK_ROOT) magic -noconsole -dnull \
+		-rcfile $(PDK_ROOT)/sky130A/libs.tech/magic/sky130A.magicrc \
+		$(SCRIPTS_DIR)/lvs_extract.tcl
+	@echo "=== Stripping filler/tap cells from both netlists ==="
+	grep -vP '\s+sky130_fd_sc_hd__(fill_\d+|tapvpwrvgnd_1)\s+\S+\s*\(\s*\)\s*;' \
+		$(OUTPUT_DIR)/cordic_top_routed.v > $(OUTPUT_DIR)/lvs_extract/cordic_top_routed_nofill.v
+	grep -vP '^X\S+ .* sky130_fd_sc_hd__(fill_\d+|tapvpwrvgnd_1)\s*$$' \
+		$(OUTPUT_DIR)/lvs_extract/cordic_top.spice > $(OUTPUT_DIR)/lvs_extract/cordic_top_nofill.spice
+	@echo "=== Running Netgen LVS ==="
+	PDK_ROOT=$(PDK_ROOT) netgen -batch lvs \
+		"$(OUTPUT_DIR)/lvs_extract/cordic_top_nofill.spice cordic_top" \
+		"$(OUTPUT_DIR)/lvs_extract/cordic_top_routed_nofill.v cordic_top" \
+		$(PDK_ROOT)/sky130A/libs.tech/netgen/sky130A_setup.tcl \
+		$(OUTPUT_DIR)/lvs_report.txt
+	@echo "=== LVS Complete — see $(OUTPUT_DIR)/lvs_report.txt ==="
 
 # -----------------------------------------------------------------------------
 # PYTHON GOLDEN MODEL

@@ -7,20 +7,38 @@
 ✅ **Formal Verification**: All assertions pass
 ✅ **RTL Simulation**: 9/9 tests pass
 ✅ **Static Timing Analysis**: Runs clean via standalone OpenSTA against the Sky130 HD
-   `tt_025C_1v80` corner. Result: **WNS -1.08 ns / TNS -33.22 ns** at the 100 MHz target — timing
-   is not yet closed pre-layout. See `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for the full
+   `tt_025C_1v80` corner. Result: **WNS -1.08 ns / TNS -33.22 ns** at the 100 MHz target,
+   pre-layout — timing is not closed. See `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for the full
    breakdown and `output/sta_checks.rpt` for the worst path.
+✅ **Place & Route**: OpenROAD, full flow (floorplan → tap/tracks → IO/global/detailed placement →
+   PDN → CTS → filler cells → global/detailed route). `make pr`. Post-route: WNS -0.58 ns / TNS
+   -16.77 ns, 34,405 µm² at 43% utilization — timing still not closed. `output/cordic_top_routed.def`,
+   `output/cordic_top_routed.v`.
+✅ **DRC**: Magic, Sky130 HD rule deck. `make drc`. **0 violations.** GDSII exported to
+   `output/cordic_top.gds`.
+✅ **LVS**: Magic extraction (LEF-only cells, so std cells stay as opaque devices matching the
+   Verilog side) + Netgen, against OpenROAD's **post-route** netlist (not pre-P&R — CTS inserts
+   buffers). `make lvs`. **Netlists match uniquely** (4107 devices / 4134 nets, exact on both
+   sides). The one reported "error" (`valid_out`/`irq` shorted) is an intentional RTL choice, not
+   a bug — see `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4. `output/lvs_report.txt`.
 
-⏳ **P&R & DRC**: Magic and Netgen are available via `nix develop`. `nixpkgs#openroad` now builds
-   (previously blocked, see "Toolchain Setup" below) — P&R itself has not been run yet.
+**Bottom line:** the full RTL→GDSII physical flow runs clean end-to-end and DRC/LVS pass. The
+one open item before tape-out is timing closure (not met pre- or post-layout at 100 MHz) and
+toggle coverage (46% vs. 85% target) — both are design/verification work, not toolchain gaps.
 
 ---
 
 ## Toolchain Setup (this environment)
 
-`flake.nix` provides `verilator`, `yosys`, `magic-vlsi`, `netgen`, and the build dependencies for
-standalone OpenSTA (`cmake`, `tcl`, `cudd`, `eigen`, `swig`, `flex`, `bison`, `gtest`). Enter the
-shell with `nix develop`.
+`flake.nix` provides `verilator`, `yosys`, `openroad`, `magic-vlsi`, `netgen-vlsi`, and the build
+dependencies for standalone OpenSTA (`cmake`, `tcl`, `cudd`, `eigen`, `swig`, `flex`, `bison`,
+`gtest`). Enter the shell with `nix develop`.
+
+**Netgen name collision:** nixpkgs' plain `netgen` package is the unrelated NGSolve/Netgen finite
+element mesh generator (a GUI tool by TU Wien) — running `netgen -batch lvs ...` against it just
+opens its GUI and does nothing useful. The VLSI LVS tool from opencircuitdesign is packaged as
+**`netgen-vlsi`** (confirm with `netgen -batch quit` printing `Netgen 1.x.xxx` from
+opencircuitdesign, not `NETGEN-x.x.xxxx` from TU Wien/RWTH/JKU).
 
 **OpenSTA** is not in `nixpkgs` as a standalone package. `nixpkgs`'s `openroad` package (which
 normally bundles it) previously failed to build: one of its dependencies, `or-tools`, pulled in
@@ -50,11 +68,21 @@ ln -sfn ~/.volare/volare/sky130/versions/<version>/sky130A/libs.ref/sky130_fd_sc
   pdk/sky130_fd_sc_hd_lib
 ```
 
+Also symlink the LEF, tech-LEF, and GDS directories `pdk/` expects (see `scripts/pr.tcl` and
+`scripts/drc.tcl` for exact paths):
+
+```bash
+ln -sfn <version-dir>/sky130A/libs.ref/sky130_fd_sc_hd/lef      pdk/sky130_fd_sc_hd_lef
+ln -sfn <version-dir>/sky130A/libs.ref/sky130_fd_sc_hd/techlef  pdk/sky130_fd_sc_hd_techlef
+ln -sfn <version-dir>/sky130A/libs.ref/sky130_fd_sc_hd/gds      pdk/sky130_fd_sc_hd_gds
+```
+
 Both `tools/OpenSTA/` and `pdk/` are gitignored — local, machine-specific build/fetch outputs,
 not part of the repo.
 
-**OpenROAD (P&R)** is now buildable via `nixpkgs#openroad` (confirmed 2026-09-17, see above). It
-hasn't been wired into this project's flow yet; standalone OpenSTA remains the STA tool in use.
+**OpenROAD (P&R)** is buildable via `nixpkgs#openroad` (confirmed 2026-09-17, see above) and is
+wired into `make pr` (`scripts/pr.tcl`). Standalone OpenSTA remains the STA tool in use
+(`make sta`), separate from OpenROAD's own bundled copy.
 
 ---
 
@@ -316,10 +344,13 @@ report_checks -path_delay max
 | RTL Simulation | Verilator | ✅ PASS | 9/9 tests |
 | Synthesis | Yosys | ✅ PASS | Gate-level netlist, Sky130 HD mapped |
 | Formal Verification | SymbiYosys | ✅ PASS | All assertions verified |
-| Timing Analysis | OpenSTA | ⚠️ **FAIL** | WNS -1.08 ns @ 100 MHz target (pre-layout) |
-| P&R | OpenROAD | ⏳ Pending | `nixpkgs#openroad` now builds (fix merged upstream); P&R not yet run |
-| DRC | Magic | ⏳ Pending | Post-P&R step |
-| LVS | Netgen | ⏳ Pending | Post-P&R step |
-| GDSII | Tool-specific | ⏳ Pending | Final deliverable |
+| Timing Analysis (pre-layout) | OpenSTA | ⚠️ **FAIL** | WNS -1.08 ns @ 100 MHz target |
+| P&R | OpenROAD | ✅ PASS | `make pr`; WNS -0.58 ns post-route (still not closed) |
+| DRC | Magic | ✅ **0 violations** | `make drc`; GDSII exported |
+| LVS | Netgen (`netgen-vlsi`) | ✅ **Match** | `make lvs`; 4107 devices / 4134 nets, exact |
+| GDSII | Magic | ✅ DONE | `output/cordic_top.gds` |
 
-**Overall**: Design is silicon-ready with complete verification up to gate level.
+**Overall**: The physical flow (synthesis → P&R → DRC → LVS → GDSII) is complete and clean.
+Timing closure at the 100 MHz target and toggle coverage (46% vs. 85%) remain open before
+tape-out — both are design/verification work, not toolchain gaps. See
+`CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for full detail.

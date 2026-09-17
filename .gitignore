@@ -23,6 +23,9 @@ output/
 *.sta
 sta_*.rpt
 
+# Netgen (VLSI LVS) run-time config artifact
+ng.ini
+
 # SymbiYosys formal — ignore generated work directories, not source files
 # (*.sby source files and tb/formal/cordic_formal.sby, tb/formal/cordic_formal_tb.sv are tracked)
 *_bmc/
