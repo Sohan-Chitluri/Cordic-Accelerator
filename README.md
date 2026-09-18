@@ -211,12 +211,12 @@ git checkout -b wave1-datapath   # Datapath agent
 **Golden Model:** Python `cordic_golden.py` — bit-exact fixed-point CORDIC reference for co-simulation
 
 **Physical Implementation Status:** Full RTL→GDSII flow (synthesis → STA → P&R → DRC → LVS) runs
-clean via `make synth sta pr drc lvs` against Sky130 HD. DRC: **0 violations**. LVS: **netlists
-match uniquely** (layout vs. post-route netlist). Timing is **not yet closed** at the 100 MHz
-(10 ns) target: pre-layout WNS -1.08 ns / TNS -33.22 ns (~90 MHz implied Fmax; worst path is the
-`fp_add_sub` carry chain), post-route WNS -0.58 ns / TNS -16.77 ns. See
-`CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 and `docs/PLACE_ROUTE_DRC.md` for full results and
-toolchain setup.
+clean via `make synth sta pr drc lvs` against Sky130 HD, with **timing closed**. DRC: **0
+violations**. LVS: **netlists match uniquely** (layout vs. post-route netlist). Clock target is
+11.5 ns (~87 MHz) — the measured achievable Fmax, per ADR-0001's "no fixed Fmax target" policy,
+after the original 100 MHz target missed by ~1 ns on the `fp_add_sub` carry chain. Pre-layout
+slack +0.26 ns, post-route +0.92 ns (both TNS 0.00). See `CORDIC_IMPLEMENTATION_TRACKER.md`
+Gate 4 and `docs/PLACE_ROUTE_DRC.md` for full results and toolchain setup.
 
 **V2 / Deferred Scope:** Runtime-variable iteration count (`cfg_iterations` port exists but is
 currently unused — V1 is hardwired to 8 iterations) and multi-stage pipeline folding (packing

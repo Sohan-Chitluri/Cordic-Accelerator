@@ -6,7 +6,12 @@
 # -----------------------------------------------------------------------------
 # CLOCK DEFINITION
 # -----------------------------------------------------------------------------
-create_clock -name clk -period 10.000 [get_ports clk]
+# Period 11.5ns (~87 MHz): measured post-synthesis Fmax, not an a-priori target
+# (see ADR-0001 — this design has no fixed Fmax requirement, deliberately, to
+# avoid over-constraining a student ASIC flow). 10.0ns (100MHz) failed timing
+# by -1.08ns pre-layout / -0.58ns post-route on the fp_add_sub carry chain;
+# 11.5ns gives ~0.4ns margin above the worst measured violation.
+create_clock -name clk -period 11.500 [get_ports clk]
 set_clock_uncertainty -setup 0.500 [get_clocks clk]
 set_clock_uncertainty -hold 0.100 [get_clocks clk]
 

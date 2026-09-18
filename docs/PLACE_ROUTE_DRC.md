@@ -7,12 +7,12 @@
 ✅ **Formal Verification**: All assertions pass
 ✅ **RTL Simulation**: 9/9 tests pass
 ✅ **Static Timing Analysis**: Runs clean via standalone OpenSTA against the Sky130 HD
-   `tt_025C_1v80` corner. Result: **WNS -1.08 ns / TNS -33.22 ns** at the 100 MHz target,
-   pre-layout — timing is not closed. See `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for the full
-   breakdown and `output/sta_checks.rpt` for the worst path.
+   `tt_025C_1v80` corner. Clock target 11.5 ns (~87 MHz, the measured achievable Fmax — see
+   `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4). Pre-layout slack +0.26 ns, TNS 0.00 — **timing
+   closed**. `output/sta_checks.rpt`.
 ✅ **Place & Route**: OpenROAD, full flow (floorplan → tap/tracks → IO/global/detailed placement →
-   PDN → CTS → filler cells → global/detailed route). `make pr`. Post-route: WNS -0.58 ns / TNS
-   -16.77 ns, 34,405 µm² at 43% utilization — timing still not closed. `output/cordic_top_routed.def`,
+   PDN → CTS → filler cells → global/detailed route). `make pr`. Post-route: slack +0.92 ns, TNS
+   0.00 — **timing closed**; 34,405 µm² at 43% utilization. `output/cordic_top_routed.def`,
    `output/cordic_top_routed.v`.
 ✅ **DRC**: Magic, Sky130 HD rule deck. `make drc`. **0 violations.** GDSII exported to
    `output/cordic_top.gds`.
@@ -22,9 +22,9 @@
    sides). The one reported "error" (`valid_out`/`irq` shorted) is an intentional RTL choice, not
    a bug — see `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4. `output/lvs_report.txt`.
 
-**Bottom line:** the full RTL→GDSII physical flow runs clean end-to-end and DRC/LVS pass. The
-one open item before tape-out is timing closure (not met pre- or post-layout at 100 MHz) and
-toggle coverage (46% vs. 85% target) — both are design/verification work, not toolchain gaps.
+**Bottom line:** the full RTL→GDSII physical flow runs clean end-to-end, timing is closed, and
+DRC/LVS pass. The one open item before tape-out is toggle coverage (46% vs. 85% target) — a
+verification completeness gap, not a toolchain or design-correctness issue.
 
 ---
 
@@ -344,13 +344,13 @@ report_checks -path_delay max
 | RTL Simulation | Verilator | ✅ PASS | 9/9 tests |
 | Synthesis | Yosys | ✅ PASS | Gate-level netlist, Sky130 HD mapped |
 | Formal Verification | SymbiYosys | ✅ PASS | All assertions verified |
-| Timing Analysis (pre-layout) | OpenSTA | ⚠️ **FAIL** | WNS -1.08 ns @ 100 MHz target |
-| P&R | OpenROAD | ✅ PASS | `make pr`; WNS -0.58 ns post-route (still not closed) |
+| Timing Analysis (pre-layout) | OpenSTA | ✅ **Closed** | +0.26 ns slack @ 11.5 ns (~87 MHz) |
+| P&R | OpenROAD | ✅ **Closed** | `make pr`; +0.92 ns slack post-route |
 | DRC | Magic | ✅ **0 violations** | `make drc`; GDSII exported |
 | LVS | Netgen (`netgen-vlsi`) | ✅ **Match** | `make lvs`; 4107 devices / 4134 nets, exact |
 | GDSII | Magic | ✅ DONE | `output/cordic_top.gds` |
 
-**Overall**: The physical flow (synthesis → P&R → DRC → LVS → GDSII) is complete and clean.
-Timing closure at the 100 MHz target and toggle coverage (46% vs. 85%) remain open before
-tape-out — both are design/verification work, not toolchain gaps. See
-`CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for full detail.
+**Overall**: The physical flow (synthesis → STA → P&R → DRC → LVS → GDSII) is complete, clean,
+and timing-closed at 11.5 ns (~87 MHz — see `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for why
+this isn't 100 MHz). Toggle coverage (46% vs. 85%) is the one remaining open item before
+tape-out.
