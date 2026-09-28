@@ -102,6 +102,50 @@ module fp_add_sub_tb;
     a = ONE_FIX; b = ONE_FIX; op = 1'b1; sat = 1'b1; #1;
     sat_sub(a, b, sat, exp_r, exp_o); chk("sub(ONE,ONE)");
 
+    // --- MIN_NEG directed regression (bugfix coverage) ---
+    // The original RTL computed `b_eff = op ? -b : b` at WIDTH-bit precision
+    // BEFORE sign-extending. Negating b==MIN_NEG (the most negative
+    // representable value, e.g. -32768 @ WIDTH=16) overflows within WIDTH
+    // bits and silently wraps back to MIN_NEG itself, which corrupted every
+    // `a - MIN_NEG` computation (the true result a+32768 was silently
+    // replaced by a+MIN_NEG, and overflow detection was lost). These vectors
+    // specifically put MIN_NEG in the `b` (subtrahend) position, which the
+    // pre-fix test suite never exercised.
+
+    // 0 - MIN_NEG = -MIN_NEG = 32768 -> saturates to MAX_POS in sat mode.
+    a = 16'sd0; b = MIN_NEG; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(0,MIN_NEG) sat [negate MIN_NEG]");
+    if (exp_o !== 1'b1 || exp_r !== MAX_POS) begin
+      $error("[fp_add_sub] reference model sanity: sub(0,MIN_NEG) sat expected MAX_POS/ovf=1, got %0d/%0b", exp_r, exp_o);
+      errors++;
+    end
+
+    // Same operation, wrap mode: 32768 mod 65536 wraps back to MIN_NEG.
+    a = 16'sd0; b = MIN_NEG; op = 1'b1; sat = 1'b0; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(0,MIN_NEG) wrap [negate MIN_NEG]");
+
+    // MIN_NEG - MIN_NEG = 0 (both operands MIN_NEG).
+    a = MIN_NEG; b = MIN_NEG; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(MIN_NEG,MIN_NEG) sat");
+    if (exp_r !== 16'sd0 || exp_o !== 1'b0) begin
+      $error("[fp_add_sub] reference model sanity: sub(MIN_NEG,MIN_NEG) expected 0/ovf=0, got %0d/%0b", exp_r, exp_o);
+      errors++;
+    end
+
+    // Nonzero a with b=MIN_NEG, sat mode: a - MIN_NEG must saturate for any
+    // a > -1 (since a+32768 > 32767 for a >= 0, and also for small negative a).
+    a = 16'sd100; b = MIN_NEG; op = 1'b1; sat = 1'b1; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(100,MIN_NEG) sat");
+
+    // Wrap mode, nonzero a.
+    a = 16'sd100; b = MIN_NEG; op = 1'b1; sat = 1'b0; #1;
+    sat_sub(a, b, sat, exp_r, exp_o); chk("sub(100,MIN_NEG) wrap");
+
+    // b=MIN_NEG under ADD (op=0): a + MIN_NEG never overflows for in-range a
+    // (no negation of b occurs on the add path), included for symmetry.
+    a = 16'sd1; b = MIN_NEG; op = 1'b0; sat = 1'b1; #1;
+    sat_add(a, b, sat, exp_r, exp_o); chk("add(1,MIN_NEG) sat");
+
     if (errors != 0) $fatal(1, "FAIL: fp_add_sub — %0d error(s)", errors);
     else        $display("PASS: fp_add_sub");
   end

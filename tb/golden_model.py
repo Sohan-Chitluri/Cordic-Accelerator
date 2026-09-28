@@ -25,6 +25,29 @@ class CordicGoldenModel:
     """
 
     def __init__(self, width=16, fract_w=12, iterations=8, saturate=True):
+        # BUGFIX: K_FIXED below (2488) is round(K * 4096), i.e. it is only a
+        # valid K-factor approximation for FRACT_W == 12 -- it does not
+        # rescale with fract_w. The RTL (rtl/cordic_lut.sv) realizes this
+        # same constant via a fixed shift-add network hardwired for
+        # FRACT_W=12 and no other value (per ADR-0002, no general multiplier
+        # in the datapath), and now enforces that constraint with an
+        # elaboration-time static assert. This model previously accepted any
+        # fract_w silently and would generate self-consistent-looking but
+        # WRONG reference vectors for fract_w != 12 (K_FIXED not rescaled,
+        # while atan_lut below WAS computed generically for the given
+        # fract_w -- an internal inconsistency). Rather than weaken this to
+        # match the old RTL bug, the model now raises for the unsupported
+        # domain, mirroring the RTL's own guard so co-simulation can never
+        # silently diverge from what the hardware can actually build.
+        if fract_w != 12:
+            raise ValueError(
+                f"CordicGoldenModel: fract_w={fract_w} is unsupported. "
+                "K_FIXED (the RTL's cordic_lut shift-add K-factor network) "
+                "is a Q12-only constant; FRACT_W is a fixed architectural "
+                "constraint (see rtl/cordic_lut.sv / rtl/cordic_stage.sv "
+                "static_assert guards). Only fract_w=12 is supported."
+            )
+
         self.WIDTH = width
         self.FRACT_W = fract_w
         self.ITERATIONS = iterations
@@ -38,9 +61,11 @@ class CordicGoldenModel:
         # K-factor: realized as the Q12 constant 2488/4096 = 0.607421875 via a
         # shift-add network in RTL (cordic_lut.sv). 0.028% vs. true K.
         self.K_FACTOR = 0.6072529350088813
-        self.K_FIXED = 2488  # round(K * 2^FRACT_W), FRACT_W = 12
+        self.K_FIXED = 2488  # round(K * 2^FRACT_W), FRACT_W = 12 (fixed; see guard above)
 
-        # Pre-computed atan(2^-i) in fixed-point
+        # Pre-computed atan(2^-i) in fixed-point. Generic in fract_w (matches
+        # cordic_stage.sv's STAGE_ANGLE table, which is likewise only
+        # populated/valid for FRACT_W=12 -- see that file's domain guard).
         self.atan_lut = self._compute_atan_lut()
 
     def _compute_atan_lut(self):

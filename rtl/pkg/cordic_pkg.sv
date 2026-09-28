@@ -31,11 +31,22 @@ package cordic_pkg;
   localparam cordic_data_t ONE_FIX  = 1 << FRACT_W;
   localparam cordic_data_t HALF_FIX = 1 << (FRACT_W - 1);
 
-  // K = 0.607252935 × 2^FRACT_W ≈ 2488 (8 iterations, FRACT_W=12)
+  // K = 0.607252935 × 2^FRACT_W ≈ 2488 (8 iterations, FRACT_W=12).
+  // NOT used elsewhere in RTL (cordic_lut.sv hardcodes its own shift-add
+  // network directly) -- this bare constant is correct ONLY for FRACT_W=12
+  // and is kept here purely as documentation/reference; do not multiply it
+  // against inputs at another FRACT_W. FRACT_W=12 is a fixed architectural
+  // constraint enforced by static_assert guards in cordic_stage.sv and
+  // cordic_lut.sv (see those files) -- WIDTH and ITERATIONS (<=16) may vary,
+  // FRACT_W may not, because both K_FACTOR and the STAGE_ANGLE atan table
+  // below are precomputed literals, not runtime-multiplier results
+  // (ADR-0002 forbids a general multiplier in the datapath).
   localparam cordic_data_t K_FACTOR = 16'sd2488;
 
-  // atan(2^-i) × 2^FRACT_W reference table (FRACT_W=12).
-  // Values: 3217, 1899, 1003, 509, 256, 128, 64, 32 for i=0..7.
+  // atan(2^-i) × 2^FRACT_W reference table (FRACT_W=12 only -- see guard
+  // note above).
+  // Values: 3217, 1899, 1003, 509, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0, 0, 0
+  // for i=0..15 (i>=13 correctly rounds to 0 at Q12 resolution).
   // cordic_stage embeds its own angle as a localparam nested-ternary for
   // maximum tool compatibility (avoids package-array indexing limitations).
 
