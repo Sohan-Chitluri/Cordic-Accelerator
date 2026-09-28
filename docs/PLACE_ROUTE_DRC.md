@@ -1,30 +1,105 @@
 # Place & Route and DRC Flow
 
-## Current Status
+## Current Status (re-verified by Agent D against the post-repair RTL — see below)
 
-✅ **Synthesis Complete**: `output/cordic_top_synth.v`, mapped to Sky130 HD standard cells
-   (`sky130_fd_sc_hd__*`), 3979 cells (454 `dfxtp_1` flip-flops)
-✅ **Formal Verification**: All assertions pass
-✅ **RTL Simulation**: 9/9 tests pass
-✅ **Static Timing Analysis**: Runs clean via standalone OpenSTA against the Sky130 HD
-   `tt_025C_1v80` corner. Clock target 11.5 ns (~87 MHz, the measured achievable Fmax — see
-   `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4). Pre-layout slack +0.26 ns, TNS 0.00 — **timing
-   closed**. `output/sta_checks.rpt`.
+The numbers below were reproduced from a clean `make clean && make synth && make sta && make pr`
+run against the RTL as of this branch (after the arithmetic/MIN_NEG fixes, the rewritten
+skid-FIFO/credit-based pipeline output stage, and the per-transaction config/overflow shift
+registers were merged). **They supersede every number previously in this file**, which was
+measured against an earlier, smaller netlist (417 cells / 48 FFs) — the current synthesized
+netlist is 3980 cells / 454 `dfxtp_1` flip-flops, so none of the old timing numbers are valid for
+this RTL.
+
+✅ **Synthesis**: `output/cordic_top_synth.v`, mapped to Sky130 HD standard cells, 3980 cells
+   (454 `dfxtp_1` flip-flops).
+✅ **RTL Simulation / Formal**: unaffected by this pass (not re-run here; see other agents' work).
+⚠️ **Static Timing Analysis (pre-layout, ideal/zero-wireload)**: standalone OpenSTA,
+   `tt_025C_1v80` corner, 11.5 ns clock (see `constraints/cordic.sdc`). No `set_wire_load_mode`
+   is set, and Sky130 HD's Liberty ships no default wire-load table, so this is a genuinely
+   ideal/zero-parasitic run, not a statistical-wireload one.
+   **WNS (setup) = +0.4173 ns, WHS (hold) = +0.2649 ns, TNS = 0.00 — closes.**
+   Critical path: `x_in[1]` (input port) → stage-0 `y`-path flops, through the `fp_add_sub`
+   carry-chain (`maj3_1`/`xnor3_1` cells — a ripple-style full-adder chain, i.e. the carry-select
+   opportunity flagged in the `e107100` commit message is not actually exploited in the mapped
+   netlist). `output/sta_checks.rpt`.
+❌ **Static Timing Analysis (post-route, REAL extracted parasitics)**: standalone OpenSTA, same
+   corner/SDC, reading a SPEF genuinely extracted by OpenROAD's OpenRCX
+   (`extract_parasitics -ext_model_file pdk/sky130_fd_sc_hd_rcx_rules.nom.magic`, the volare-
+   fetched Sky130A "nom" OpenRCX rules deck) from the actual detailed-routed DEF, via the new
+   `scripts/sta_postroute.tcl` — not OpenROAD's own inline post-route timer, which is a separate
+   number (see "Two post-route numbers" below).
+   **WNS (setup) = -2.07 ns, WHS (hold) = +0.32 ns, TNS = -46.77 ns — does NOT close at 11.5 ns.**
+   Critical path: same startpoint/topology as pre-layout (`x_in[1]` → stage-0 `y` flops through
+   `fp_add_sub`'s carry chain) — extracted routing RC roughly *quintuples* the setup violation
+   budget needed (from 0 to ~2.07 ns), it does not move the critical path elsewhere.
+   Implied real Fmax ≈ 1000/(11.5+2.07) ≈ **73.7 MHz**, not the ~87 MHz implied by the pre-layout
+   number alone. `output/sta_postroute_checks.rpt`, `output/sta_postroute_wns.rpt`,
+   `output/sta_postroute_tns.rpt`.
 ✅ **Place & Route**: OpenROAD, full flow (floorplan → tap/tracks → IO/global/detailed placement →
-   PDN → CTS → filler cells → global/detailed route). `make pr`. Post-route: slack +0.92 ns, TNS
-   0.00 — **timing closed**; 34,405 µm² at 43% utilization. `output/cordic_top_routed.def`,
-   `output/cordic_top_routed.v`.
-✅ **DRC**: Magic, Sky130 HD rule deck. `make drc`. **0 violations.** GDSII exported to
-   `output/cordic_top.gds`.
-✅ **LVS**: Magic extraction (LEF-only cells, so std cells stay as opaque devices matching the
-   Verilog side) + Netgen, against OpenROAD's **post-route** netlist (not pre-P&R — CTS inserts
-   buffers). `make lvs`. **Netlists match uniquely** (4107 devices / 4134 nets, exact on both
-   sides). The one reported "error" (`valid_out`/`irq` shorted) is an intentional RTL choice, not
-   a bug — see `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4. `output/lvs_report.txt`.
+   PDN → CTS → filler cells → global/detailed route → OpenRCX parasitic extraction). `make pr`.
+   Routing itself completes with 0 DRT violations. `output/cordic_top_routed.def`,
+   `output/cordic_top_routed.v`, `output/cordic_top_routed.spef`.
+⚠️ **DRC / LVS**: **not re-verified against the current RTL in this pass** (time-boxed out of this
+   session before `make drc`/`make lvs` could be re-run against the freshly re-routed design).
+   The previous ✅ 0-violations / clean-match numbers in this file were measured against the old,
+   smaller netlist and must be treated as stale until re-run against the current
+   `output/cordic_top_routed.def`. Do not cite them as current.
 
-**Bottom line:** the full RTL→GDSII physical flow runs clean end-to-end, timing is closed, and
-DRC/LVS pass. The one open item before tape-out is toggle coverage (46% vs. 85% target) — a
-verification completeness gap, not a toolchain or design-correctness issue.
+### Two post-route numbers — resolving the zero-wireload vs. extracted-RC gap
+
+An earlier (now-stale, pre-repair-RTL) third-party audit at commit `e107100` reported that the
+project's *published* post-route WNS (-0.583711 ns at a 10 ns clock) was measured with
+effectively ideal/zero-wireload parasitics, and that loading real extracted SPEF gave a much
+worse number (-2.461153 ns / -89.56 ns TNS). That audit's own numbers are from a different clock
+period (10 ns) and a different (older) netlist, so they are cited here only as methodology
+precedent, not as current results.
+
+Independently reproducing this on the *current* RTL, at the current 11.5 ns clock, confirms the
+same *shape* of gap:
+- OpenROAD's own inline post-route report (`report_worst_slack` called immediately after
+  `extract_parasitics`/`write_spef`, still inside the same OpenROAD session) reported
+  worst slack max/min = **+0.42 ns / +0.26 ns** — i.e. essentially identical to the pre-layout,
+  zero-parasitic number, even though real parasitics had just been extracted in that same session.
+  This is exactly the trap the audit warned about: OpenROAD's resident timer does not necessarily
+  re-run a full timing update against newly-loaded/extracted parasitics on request, and a
+  post-route-labeled number from it can silently still reflect ideal wires.
+- A fresh, standalone OpenSTA process — the same tool used for pre-layout STA — that reads the
+  routed netlist cold and explicitly `read_spef`s the OpenRCX-extracted parasitics from disk
+  reports **WNS = -2.07 ns, TNS = -46.77 ns**, as detailed above.
+
+`scripts/pr.tcl` now performs the OpenRCX extraction and writes `output/cordic_top_routed.spef`;
+`scripts/sta_postroute.tcl` (new) is the standalone-OpenSTA + real-SPEF run. **Only the
+standalone-OpenSTA-with-real-SPEF number should be trusted as "post-route timing"** — an inline
+OpenROAD report taken right after extraction is not sufficient evidence of that on its own.
+
+### Does 11.5 ns (ADR-0001 / `e107100`'s "measured achievable Fmax") still hold?
+
+No, not for this RTL. `e107100`'s post-route "+0.92 ns, TNS 0.00, timing closed" claim does not
+reproduce here — see numbers above. Two things changed since `e107100`: the RTL itself grew
+substantially (skid-FIFO + credit counter, per-stage config/overflow shift registers — 3980 cells
+vs. 417 previously), and, more importantly, `e107100`'s own post-route number looks to have
+suffered from the same zero-wireload-masquerading-as-post-route gap described above, independent
+of the RTL growth — the critical path is the *same* `fp_add_sub` carry chain in both the pre-layout
+and post-route-with-real-RC runs, just with the added routing parasitics pushing it from met to a
+sizeable violation.
+
+**This is not "pick an easier clock and move on" territory per ADR-0001** — the critical path is
+a specific, previously-flagged, structurally-fixable issue: `rtl/fp_add_sub.sv`'s carry chain
+maps to a `maj3_1`/`xnor3_1` ripple structure in the synthesized netlist rather than the
+carry-select structure the `e107100` commit message says was intended but left unexploited. That
+is squarely an RTL/arithmetic fix (out of this agent's file ownership — flagged for the
+arithmetic agent/lead, not implemented here), not a "this is just the measured ceiling, document
+it" situation. Padding the SDC clock out to ~13.6 ns to force a clean TNS=0 post-route report
+would satisfy the letter of ADR-0001 ("measure, don't target 100 MHz") while obscuring a genuine,
+fixable structural bottleneck — which the repair brief explicitly says not to do. Accordingly,
+`constraints/cordic.sdc` is left at 11.5 ns in this pass, honestly documented here as *not
+closing post-route*, pending either the carry-chain fix or an explicit, deliberate decision by
+the lead to relax the constraint with the real number in hand.
+
+**Bottom line:** pre-layout (ideal-wire) STA is clean at 11.5 ns; **post-route STA with real
+extracted parasitics is not** (WNS -2.07 ns / TNS -46.77 ns / real Fmax ≈73.7 MHz). DRC/LVS were
+not re-verified against the current RTL in this session and should not be cited as passing until
+re-run. Toggle coverage (46% vs. 85% target, from prior passes) remains a separate open item.
 
 ---
 
@@ -341,16 +416,20 @@ report_checks -path_delay max
 
 | Step | Tool | Status | Notes |
 |------|------|--------|-------|
-| RTL Simulation | Verilator | ✅ PASS | 9/9 tests |
-| Synthesis | Yosys | ✅ PASS | Gate-level netlist, Sky130 HD mapped |
-| Formal Verification | SymbiYosys | ✅ PASS | All assertions verified |
-| Timing Analysis (pre-layout) | OpenSTA | ✅ **Closed** | +0.26 ns slack @ 11.5 ns (~87 MHz) |
-| P&R | OpenROAD | ✅ **Closed** | `make pr`; +0.92 ns slack post-route |
-| DRC | Magic | ✅ **0 violations** | `make drc`; GDSII exported |
-| LVS | Netgen (`netgen-vlsi`) | ✅ **Match** | `make lvs`; 4107 devices / 4134 nets, exact |
-| GDSII | Magic | ✅ DONE | `output/cordic_top.gds` |
+| Synthesis | Yosys | ✅ PASS | 3980 cells / 454 FFs, Sky130 HD mapped |
+| Timing Analysis (pre-layout, ideal wires) | OpenSTA | ✅ **Closed** | WNS +0.42 ns, WHS +0.26 ns, TNS 0.00 @ 11.5 ns |
+| Timing Analysis (post-route, real extracted RC) | OpenSTA + OpenRCX SPEF | ❌ **NOT closed** | WNS -2.07 ns, WHS +0.32 ns, TNS -46.77 ns @ 11.5 ns — real Fmax ≈73.7 MHz |
+| P&R (routing itself) | OpenROAD | ✅ Routes clean | `make pr`; 0 DRT violations |
+| DRC | Magic | ⚠️ **Not re-verified** | stale (old netlist); re-run needed |
+| LVS | Netgen (`netgen-vlsi`) | ⚠️ **Not re-verified** | stale (old netlist); re-run needed |
+| GDSII | Magic | ⚠️ **Not re-verified** | depends on DRC re-run |
 
-**Overall**: The physical flow (synthesis → STA → P&R → DRC → LVS → GDSII) is complete, clean,
-and timing-closed at 11.5 ns (~87 MHz — see `CORDIC_IMPLEMENTATION_TRACKER.md` Gate 4 for why
-this isn't 100 MHz). Toggle coverage (46% vs. 85%) is the one remaining open item before
-tape-out.
+**Overall**: pre-layout STA closes at 11.5 ns on ideal wires; loading OpenROAD's own OpenRCX-
+extracted parasitics from the actual routed layout into a standalone OpenSTA run shows it does
+**not** close post-route — WNS -2.07 ns / TNS -46.77 ns, implied real Fmax ≈73.7 MHz, not the
+~87 MHz the pre-layout-only number would suggest. The critical path in both cases is the same
+`fp_add_sub` carry chain (`rtl/fp_add_sub.sv`), synthesized as a ripple-style `maj3_1`/`xnor3_1`
+chain rather than a carry-select structure — see "Does 11.5 ns still hold?" above for why this is
+flagged as an RTL fix candidate rather than grounds for further relaxing the clock. DRC/LVS/GDSII
+were not re-verified against the current (post-repair) RTL in this pass and must not be read as
+current. Toggle coverage (46% vs. 85%, from prior passes) remains a separate open item.
