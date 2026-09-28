@@ -100,14 +100,12 @@ module cordic_pipeline #(
 
   // ---------------------------------------------------------------------------
   // STAGE INTERCONNECT (N+1 entries: index 0 = input, index N = last stage out)
-  // stage_overflow_accum[i] = accumulated overflow from all stages 0..i-1
   // ---------------------------------------------------------------------------
   logic signed [WIDTH-1:0] stage_x [0:ITERATIONS];
   logic signed [WIDTH-1:0] stage_y [0:ITERATIONS];
   logic signed [WIDTH-1:0] stage_z [0:ITERATIONS];
   logic         stage_valid    [0:ITERATIONS];
   logic         stage_overflow [0:ITERATIONS];
-  logic         stage_overflow_accum [0:ITERATIONS];
 
   // Input stage: K-prescaled x/y, raw z, valid gated with ready.
   // Gated directly by the `ready_out` port (see OUTPUT SKID FIFO below) —
@@ -122,11 +120,106 @@ module cordic_pipeline #(
   assign stage_z[0]              = z_in;
   assign stage_valid[0]          = valid_in & ready_out;
   assign stage_overflow[0]       = 1'b0;
-  assign stage_overflow_accum[0] = 1'b0;  // No overflow before any stages
+
+  // ---------------------------------------------------------------------------
+  // PER-TRANSACTION CONFIG TAG (fixes config/overflow alignment bug)
+  //
+  // cfg_saturate_r is a single live register, updated whenever
+  // config_valid && config_ready, and the old code wired it identically into
+  // EVERY cordic_stage instance's `.sat` port. But each pipeline position i
+  // holds a DIFFERENT in-flight transaction at any given cycle (position i
+  // holds whatever was admitted i cycles ago) — cordic_stage free-runs every
+  // cycle with no stall input, so the stage array advances in lockstep
+  // regardless of downstream backpressure (backpressure only affects
+  // admission and the output FIFO, not this chain). So a cfg_saturate write
+  // that lands while transactions are in flight retroactively changed
+  // saturation mode for whichever stages hadn't executed yet that cycle —
+  // inconsistently across a SINGLE transaction's own 8 stages. Confirmed by
+  // direct inspection and independently by Agent E's formal cfg_align BMC
+  // counterexample.
+  //
+  // Fix: capture cfg_saturate_r at admission (position 0, a plain wire — no
+  // extra latency since stage 0 processes this-cycle-admitted data) and
+  // shift it forward one register per stage, in lockstep with the stage
+  // chain. stage i then always sees the config that was live when ITS OWN
+  // transaction was admitted, regardless of any later config write. No
+  // change to cordic_stage.sv's ports is needed.
+  // ---------------------------------------------------------------------------
+  logic cfg_saturate_sr [0:ITERATIONS-1];
+
+  assign cfg_saturate_sr[0] = cfg_saturate_r;
+
+  always_ff @(posedge clk) begin
+    if (!rst_n) begin
+      for (int k = 1; k < ITERATIONS; k++) cfg_saturate_sr[k] <= 1'b1;
+    end else begin
+      for (int k = 1; k < ITERATIONS; k++) cfg_saturate_sr[k] <= cfg_saturate_sr[k-1];
+    end
+  end
+
+  // ---------------------------------------------------------------------------
+  // PER-TRANSACTION OVERFLOW ACCUMULATION (fixes overflow-attribution bug)
+  //
+  // stage_overflow[1..ITERATIONS] are the REGISTERED overflow outputs of
+  // stages 0..ITERATIONS-1 *as of the current cycle* — i.e. they belong to
+  // DIFFERENT transactions resident at different pipeline depths (same
+  // free-running-chain reasoning as above), not to one transaction's history
+  // at different times. The old combinational OR chain
+  // (stage_overflow_accum[i+1] = stage_overflow_accum[i] | stage_overflow[i+1],
+  // re-evaluated fresh every cycle) therefore ORs together overflow flags
+  // from several unrelated in-flight transactions currently resident at
+  // positions 1..ITERATIONS, not the completing transaction's own overflow
+  // history — and that combinational value is exactly what got latched into
+  // fifo_ovf[wr_ptr] at fifo_push. This is a real, reachable bug (verified
+  // by hand-tracing two back-to-back transactions where only the second
+  // overflows: at the cycle the first transaction completes, the
+  // combinational chain also includes the second transaction's overflow bit
+  // from whatever earlier position it currently occupies, corrupting the
+  // first transaction's reported overflow) and is NOT fixed by the FIFO
+  // rewrite — the FIFO just faithfully stores whatever buggy value the
+  // combinational chain produced at push time.
+  //
+  // Fix: realign each stage's overflow bit to the cycle at which its OWN
+  // transaction completes, using a pure per-tap delay line (no cross-register
+  // combining, so there is no same-edge race against the registered overflow
+  // output inside cordic_stage). Stage i's overflow bit is produced
+  // (ITERATIONS - i) cycles before its transaction reaches the final stage,
+  // so it is delayed by that many extra cycles; the ITERATIONS-th stage's
+  // bit needs no delay. All aligned bits are then OR-reduced combinationally
+  // at the completion cycle, which is now valid because every operand
+  // belongs to the same transaction at that instant.
+  // ---------------------------------------------------------------------------
+  logic stage_overflow_aligned [1:ITERATIONS];
+
+  for (genvar i = 1; i <= ITERATIONS; i++) begin : g_ovf_align
+    localparam int DEPTH = ITERATIONS - i;
+    if (DEPTH == 0) begin : g_no_delay
+      assign stage_overflow_aligned[i] = stage_overflow[i];
+    end else if (DEPTH == 1) begin : g_delay1
+      logic dly_r;
+      always_ff @(posedge clk) begin
+        if (!rst_n) dly_r <= 1'b0;
+        else        dly_r <= stage_overflow[i];
+      end
+      assign stage_overflow_aligned[i] = dly_r;
+    end else begin : g_delayn
+      logic [DEPTH-1:0] dly_sr;
+      always_ff @(posedge clk) begin
+        if (!rst_n) dly_sr <= '0;
+        else        dly_sr <= {dly_sr[DEPTH-2:0], stage_overflow[i]};
+      end
+      assign stage_overflow_aligned[i] = dly_sr[DEPTH-1];
+    end
+  end
+
+  logic overflow_final;
+  always_comb begin
+    overflow_final = 1'b0;
+    for (int i = 1; i <= ITERATIONS; i++) overflow_final |= stage_overflow_aligned[i];
+  end
 
   // ---------------------------------------------------------------------------
   // CORDIC STAGE CHAIN (generate)
-  // Overflow accumulates through the pipeline: accum[i+1] = accum[i] | ovf[i]
   // ---------------------------------------------------------------------------
   for (genvar i = 0; i < ITERATIONS; i++) begin : g_stages
     cordic_stage #(
@@ -140,18 +233,13 @@ module cordic_pipeline #(
       .y_in     (stage_y[i]),
       .z_in     (stage_z[i]),
       .valid_in (stage_valid[i]),
-      .sat      (cfg_saturate_r),
+      .sat      (cfg_saturate_sr[i]),
       .x_out    (stage_x[i+1]),
       .y_out    (stage_y[i+1]),
       .z_out    (stage_z[i+1]),
       .valid_out(stage_valid[i+1]),
       .overflow (stage_overflow[i+1])
     );
-
-    // Pipeline accumulated overflow: OR current stage overflow with accumulated overflow
-    // This accumulation happens combinatorially within this loop, then gets latched
-    // in the output register at the appropriate time.
-    assign stage_overflow_accum[i+1] = stage_overflow_accum[i] | stage_overflow[i+1];
   end
 
   // ---------------------------------------------------------------------------
@@ -232,14 +320,16 @@ module cordic_pipeline #(
       reserved_count <= '0;
     end else begin
       // FIFO storage: capture every completion, indexed by wr_ptr.
-      // Overflow from stage_overflow_accum[ITERATIONS] = accumulated
-      // overflow from all stages, matching the golden model where overflow
-      // is ORed across all CORDIC iterations.
+      // Overflow from overflow_final = per-transaction accumulated overflow
+      // across all stages (see PER-TRANSACTION OVERFLOW ACCUMULATION above),
+      // matching the golden model where overflow is ORed across all CORDIC
+      // iterations of the SAME transaction — not a cross-transaction OR of
+      // whatever else happens to be in flight.
       if (fifo_push) begin
         fifo_x[wr_ptr]   <= stage_x[ITERATIONS];
         fifo_y[wr_ptr]   <= stage_y[ITERATIONS];
         fifo_z[wr_ptr]   <= stage_z[ITERATIONS];
-        fifo_ovf[wr_ptr] <= stage_overflow_accum[ITERATIONS];
+        fifo_ovf[wr_ptr] <= overflow_final;
         wr_ptr           <= (wr_ptr == FIFO_AW'(FIFO_DEPTH - 1)) ? '0 : wr_ptr + 1'b1;
       end
       if (fifo_pop)
