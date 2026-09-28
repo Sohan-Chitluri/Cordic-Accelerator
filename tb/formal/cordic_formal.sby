@@ -1,40 +1,127 @@
-# SymbiYosys formal verification job — CORDIC stage-level BMC
-#
-# Verifies: reset behaviour, saturation clamping, valid propagation,
-#           output range (cordic_assertions.sv + cordic_formal_tb.sv).
+# SymbiYosys formal verification jobs — CORDIC stage-level AND pipeline-level BMC
 #
 # Run from project root:
 #   make formal
-# or directly:
+# or directly (all tasks):
 #   sby -f tb/formal/cordic_formal.sby
+# or a single task:
+#   sby -f tb/formal/cordic_formal.sby stage
 #
-# PASS  = all assertions proved within depth 20
-# FAIL  = counterexample found (property violated)
+# PASS    = all assertions proved within the task's depth
+# FAIL    = counterexample found (property violated) — check
+#           tb/formal/cordic_formal_<task>/engine_0/trace.vcd
 # UNKNOWN = solver timeout or depth insufficient — NOT treated as PASS
 #
-# Depth 20 covers all current temporal properties (max lookahead = 2 cycles).
-# Increase depth and add 'prove' mode for full inductive verification.
+# Tasks (see tb/formal/cordic_formal_tb.sv module headers for full detail):
+#   stage         - EXPECT PASS. Stage-local BMC (cordic_stage via
+#                   cordic_formal_tb). Depth 20. Includes the reachability
+#                   `cover`s proving P4's antecedent (sat && overflow) is
+#                   not vacuous, and proving the x-only/y-only/both
+#                   overflow sub-cases are each independently reachable.
+#   reset         - EXPECT PASS. Pipeline-level reset correctness (PP1),
+#                   via cordic_pipeline_reset_tb.
+#   conservation  - EXPECT FAIL (genuine architectural finding, not a
+#                   harness bug — see cordic_pipeline_conservation_tb
+#                   header). Fixed-latency + no-transaction-loss/dup does
+#                   NOT hold under a fully adversarial ready_in: likely
+#                   root cause is an off-by-one between cordic_pipeline's
+#                   admission/credit window (VALID_DEPTH=ITERATIONS+2) and
+#                   its true stage-chain latency (ITERATIONS+1).
+#   satclamp      - EXPECT FAIL (genuine architectural finding, not a
+#                   harness bug — see cordic_pipeline_satclamp_tb header).
+#                   Saturation clamping at the pipeline OUTPUT does not
+#                   hold: the pipeline's `overflow` flag is a sticky
+#                   "saturated somewhere in the 8 stages" bit, not a "final
+#                   output is at the boundary" bit, because a mid-pipeline
+#                   clamp can be moved off the boundary by later stages'
+#                   arithmetic.
+#   cfg_align     - EXPECT FAIL when config is left free (genuine
+#                   architectural finding). Probes whether
+#                   cordic_pipeline's single globally-broadcast
+#                   cfg_saturate_r register can change value while a
+#                   transaction is mid-flight through the 8 stages — i.e.
+#                   whether "overflow status corresponds to the same
+#                   transaction as the data it accompanies." See
+#                   cordic_pipeline_cfg_align_tb header.
+#
+# Every "EXPECT FAIL" task above is a deliberate, documented, re-checkable
+# claim, not a broken or abandoned proof — kept in [tasks] (rather than
+# deleted or weakened until it passes) specifically so these architectural
+# findings stay under continuous formal re-verification as the RTL changes.
+#
+# Yosys does not support 'property...endproperty' SVA in this flow — see
+# cordic_formal_tb.sv header for details. All properties below are
+# procedural ($past-based) assert/assume/cover statements in the harness.
+
+[tasks]
+stage
+reset
+conservation
+satclamp
+cfg_align
 
 [options]
-mode bmc
-depth 20
+stage: mode bmc
+stage: depth 20
+
+reset: mode bmc
+reset: depth 24
+
+conservation: mode bmc
+conservation: depth 24
+
+satclamp: mode bmc
+satclamp: depth 24
+
+cfg_align: mode bmc
+cfg_align: depth 24
 
 [engines]
 smtbmc z3
 
 [script]
-# sby copies [files] to src/ (flat — no subdirs); script uses basenames only.
-# Yosys 0.67 does NOT support SVA property...endproperty — cordic_assertions.sv
-# (SVA format) is excluded; procedural $past-based assertions live in the harness.
-# Compilation-unit scope imports required for Yosys 0.67 (see synthesis notes).
-read -formal -DFORMAL cordic_pkg.sv
-read -formal -DFORMAL fp_add_sub.sv
-read -formal -DFORMAL cordic_stage.sv
-read -formal -DFORMAL cordic_formal_tb.sv
-prep -top cordic_formal_tb
+stage: read -formal -DFORMAL cordic_pkg.sv
+stage: read -formal -DFORMAL fp_add_sub.sv
+stage: read -formal -DFORMAL cordic_stage.sv
+stage: read -formal -DFORMAL cordic_formal_tb.sv
+stage: prep -top cordic_formal_tb
+
+reset: read -formal -DFORMAL cordic_pkg.sv
+reset: read -formal -DFORMAL fp_add_sub.sv
+reset: read -formal -DFORMAL cordic_stage.sv
+reset: read -formal -DFORMAL cordic_lut.sv
+reset: read -formal -DFORMAL cordic_pipeline.sv
+reset: read -formal -DFORMAL cordic_formal_tb.sv
+reset: prep -top cordic_pipeline_reset_tb
+
+conservation: read -formal -DFORMAL cordic_pkg.sv
+conservation: read -formal -DFORMAL fp_add_sub.sv
+conservation: read -formal -DFORMAL cordic_stage.sv
+conservation: read -formal -DFORMAL cordic_lut.sv
+conservation: read -formal -DFORMAL cordic_pipeline.sv
+conservation: read -formal -DFORMAL cordic_formal_tb.sv
+conservation: prep -top cordic_pipeline_conservation_tb
+
+satclamp: read -formal -DFORMAL cordic_pkg.sv
+satclamp: read -formal -DFORMAL fp_add_sub.sv
+satclamp: read -formal -DFORMAL cordic_stage.sv
+satclamp: read -formal -DFORMAL cordic_lut.sv
+satclamp: read -formal -DFORMAL cordic_pipeline.sv
+satclamp: read -formal -DFORMAL cordic_formal_tb.sv
+satclamp: prep -top cordic_pipeline_satclamp_tb
+
+cfg_align: read -formal -DFORMAL cordic_pkg.sv
+cfg_align: read -formal -DFORMAL fp_add_sub.sv
+cfg_align: read -formal -DFORMAL cordic_stage.sv
+cfg_align: read -formal -DFORMAL cordic_lut.sv
+cfg_align: read -formal -DFORMAL cordic_pipeline.sv
+cfg_align: read -formal -DFORMAL cordic_formal_tb.sv
+cfg_align: prep -top cordic_pipeline_cfg_align_tb
 
 [files]
 rtl/pkg/cordic_pkg.sv
 rtl/fp_add_sub.sv
 rtl/cordic_stage.sv
+rtl/cordic_lut.sv
+rtl/cordic_pipeline.sv
 tb/formal/cordic_formal_tb.sv

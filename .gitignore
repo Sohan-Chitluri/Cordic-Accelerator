@@ -32,6 +32,9 @@ ng.ini
 *_prove/
 *_cover/
 tb/formal/cordic_formal/
+# multi-task cordic_formal.sby now emits one dir per [tasks] entry:
+# tb/formal/cordic_formal_<taskname>/ (stage, reset, conservation, satclamp, cfg_align)
+tb/formal/cordic_formal_*/
 
 # Python
 __pycache__/
