@@ -6,6 +6,25 @@
 //              Simulation/Formal: assertions checked by Verilator/SymbiYosys.
 // Owner: Architecture Agent (Lead)
 // Wave: 0 (Foundation)
+//
+// FORMAL-TOOL COVERAGE NOTE (Formal Verification agent, see
+// tb/formal/cordic_formal.sby / cordic_formal_tb.sv):
+//   This module is bound from cordic_stage.sv inside `ifdef ASSERT_ON`, but
+//   the SymbiYosys formal flow never defines ASSERT_ON (only -DFORMAL), so
+//   NONE of the five properties below (p_reset_clears_valid,
+//   p_reset_clears_overflow, p_sat_clamps_x, p_sat_clamps_y,
+//   p_valid_propagates) are elaborated or checked by `make formal` as
+//   written here. They run under simulation only (Verilator). The formal
+//   flow re-expresses the equivalents of p_reset_clears_valid,
+//   p_reset_clears_overflow and p_valid_propagates as procedural
+//   ($past-based) assertions directly in tb/formal/cordic_formal_tb.sv
+//   (labelled P1/P2/P3 there), because this project's Yosys/sby versions do
+//   not reliably parse `property...endproperty` SVA. p_sat_clamps_x/y are
+//   likewise re-checked there as P4/P5, with an explicit `cover` proving
+//   the (sat && overflow) antecedent is reachable — earlier formal
+//   harnesses over-constrained x_in/y_in (XY_BOUND=16383) such that
+//   overflow could never be asserted, making any clamp property vacuously
+//   true. See tb/formal/cordic_formal_tb.sv for details and the fix.
 //==============================================================================
 
 import cordic_pkg::*;
