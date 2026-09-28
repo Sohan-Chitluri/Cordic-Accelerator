@@ -32,17 +32,76 @@ module cordic_stage #(
   output logic                    overflow
 );
 
-  // Per-stage angle: atan(2^-STAGE_IDX) × 2^FRACT_W in Q12.3 (FRACT_W=12).
-  // Nested ternary for guaranteed elaboration-time constant folding in all tools.
+  // ---------------------------------------------------------------------------
+  // PARAMETER DOMAIN GUARD
+  // ---------------------------------------------------------------------------
+  // STAGE_ANGLE (below) is a table of atan(2^-i) * 2^FRACT_W precomputed for
+  // FRACT_W=12 ONLY. Rescaling it to another FRACT_W is not a simple shift
+  // (atan is transcendental), so any FRACT_W != 12 silently produced wrong
+  // rotation angles here prior to this fix (root cause of the reported
+  // 16/10/8 and 32/24/8 failures — WIDTH can vary, FRACT_W cannot).
+  // Additionally, the table only has entries for STAGE_IDX 0..15; the old
+  // code's final `else` branch silently reused the STAGE_IDX==7 value (32)
+  // for every STAGE_IDX >= 8, which is the root cause of any ITERATIONS > 8
+  // failure. WIDTH must also be wide enough to hold the largest table entry
+  // (3217 needs 13 signed bits) — this is what made 8/4/8 and 4/1/8 fail too
+  // (both WIDTH and FRACT_W out of domain).
+  //
+  // Per architecture ADR-0002 (no general multiplier in the datapath) these
+  // constants must stay compile-time literals, not a runtime-computed
+  // rescale. Since transcendental-function elaboration (e.g. $atan in a
+  // localparam) is not reliably supported by the project's synthesis path
+  // (Yosys) or verified portable across the full toolchain (Verilator +
+  // Yosys + SymbiYosys), we do NOT attempt full FRACT_W genericity here.
+  // Instead: FRACT_W is a fixed architectural constant (12) and any other
+  // value must fail elaboration loudly rather than compute silently-wrong
+  // numbers. This mirrors the constraint already implicit in cordic_lut's
+  // K_FACTOR shift-add network.
+  //
+  // The static-assert idiom below (division by a param-dependent constant
+  // that evaluates to 0 for an unsupported config) is a compile-time error
+  // in Verilator, Yosys, and standard SV simulators/synthesizers alike —
+  // unlike an `initial $fatal`, it also fires during synthesis elaboration.
+  localparam bit FRACT_W_SUPPORTED   = (FRACT_W == 12);
+  localparam bit STAGE_IDX_SUPPORTED = (STAGE_IDX < 16);
+  localparam bit WIDTH_SUPPORTED     = (WIDTH >= 13);   // must hold +/-3217
+  localparam int unsigned STATIC_ASSERT_STAGE_DOMAIN =
+    (FRACT_W_SUPPORTED && STAGE_IDX_SUPPORTED && WIDTH_SUPPORTED) ? 1 : 1/0;
+
+  // Human-readable failure message for simulation flows (the static assert
+  // above already blocks synthesis/elaboration on its own).
+  initial begin
+    if (!FRACT_W_SUPPORTED) begin
+      $fatal(1, "cordic_stage: unsupported FRACT_W=%0d (only FRACT_W=12 is supported; STAGE_ANGLE is a precomputed Q.12 atan table)", FRACT_W);
+    end
+    if (!STAGE_IDX_SUPPORTED) begin
+      $fatal(1, "cordic_stage: unsupported STAGE_IDX=%0d (only STAGE_IDX 0..15 have precomputed atan constants; ITERATIONS must be <= 16)", STAGE_IDX);
+    end
+    if (!WIDTH_SUPPORTED) begin
+      $fatal(1, "cordic_stage: unsupported WIDTH=%0d (WIDTH must be >= 13 to hold the +/-3217 STAGE_ANGLE constant)", WIDTH);
+    end
+  end
+
+  // Per-stage angle: atan(2^-STAGE_IDX) x 2^FRACT_W, FRACT_W=12 fixed (see
+  // domain guard above). Nested ternary for guaranteed elaboration-time
+  // constant folding in all tools (STAGE_IDX 0..15; entries beyond ~12
+  // correctly round to 0 at Q12 precision -- not a bug, just below
+  // resolution -- STAGE_IDX >= 16 is rejected by the guard above).
   localparam logic signed [WIDTH-1:0] STAGE_ANGLE =
-    (STAGE_IDX == 0) ? 16'sd3217 :   // 45.000°
-    (STAGE_IDX == 1) ? 16'sd1899 :   // 26.565°
-    (STAGE_IDX == 2) ? 16'sd1003 :   // 14.036°
-    (STAGE_IDX == 3) ? 16'sd509  :   //  7.125°
-    (STAGE_IDX == 4) ? 16'sd256  :   //  3.576°
-    (STAGE_IDX == 5) ? 16'sd128  :   //  1.790°
-    (STAGE_IDX == 6) ? 16'sd64   :   //  0.895°
-                       16'sd32;      //  0.448° (STAGE_IDX == 7)
+    (STAGE_IDX == 0)  ? 3217 :   // 45.000 deg
+    (STAGE_IDX == 1)  ? 1899 :   // 26.565 deg
+    (STAGE_IDX == 2)  ? 1003 :   // 14.036 deg
+    (STAGE_IDX == 3)  ? 509  :   //  7.125 deg
+    (STAGE_IDX == 4)  ? 256  :   //  3.576 deg
+    (STAGE_IDX == 5)  ? 128  :   //  1.790 deg
+    (STAGE_IDX == 6)  ? 64   :   //  0.895 deg
+    (STAGE_IDX == 7)  ? 32   :   //  0.448 deg
+    (STAGE_IDX == 8)  ? 16   :   //  0.224 deg
+    (STAGE_IDX == 9)  ? 8    :   //  0.112 deg
+    (STAGE_IDX == 10) ? 4    :   //  0.056 deg
+    (STAGE_IDX == 11) ? 2    :   //  0.028 deg
+    (STAGE_IDX == 12) ? 1    :   //  0.014 deg
+                         0;      //  STAGE_IDX 13..15: rounds to 0 at Q12
 
   // ---------------------------------------------------------------------------
   // COMBINATIONAL DATAPATH
@@ -71,32 +130,45 @@ module cordic_stage #(
     y_shifted     = shifted_ext_y[WIDTH-1:0];
   end
 
-  // Conditional negate: +shifted if sigma=1, -shifted if sigma=0
-  logic signed [WIDTH-1:0] x_mux, y_mux;
+  // BUGFIX (MIN_NEG): this used to be a conditional unary negate
+  // (`x_mux = sigma ? x_shifted : -x_shifted;`) feeding a fixed-op adder.
+  // Unary negation of a WIDTH-bit value overflows silently when
+  // x_shifted/y_shifted == MIN_NEG (reachable whenever x_in/y_in == MIN_NEG
+  // and STAGE_IDX == 0, since asr(MIN_NEG, 0) == MIN_NEG), producing the
+  // wrong sign into the adder with no overflow indication.
+  //
+  // Fix: never negate the shifted operand. Feed it to fp_add_sub unmodified
+  // and select add/subtract via `op` instead, which is mathematically
+  // identical (x_new = x_in - sigma*y_shifted, y_new = y_in + sigma*x_shifted)
+  // but never truncates/negates an operand outside fp_add_sub's own
+  // (now-correct, sign-extend-first) overflow-safe path.
+  logic         op_x, op_y;
   always_comb begin
-    x_mux = sigma ? x_shifted : -x_shifted;
-    y_mux = sigma ? y_shifted : -y_shifted;
+    op_x = sigma;    // sigma=1: x_new = x_in - y_shifted (subtract)
+                      // sigma=0: x_new = x_in + y_shifted (add)
+    op_y = ~sigma;    // sigma=1: y_new = y_in + x_shifted (add)
+                      // sigma=0: y_new = y_in - x_shifted (subtract)
   end
 
   // Three fp_add_sub instances
   logic signed [WIDTH-1:0] x_comb, y_comb, z_comb;
   logic         ovf_x, ovf_y, ovf_z;
 
-  // X path: x_new = x_in - sigma × (y_in >> STAGE_IDX)
+  // X path: x_new = x_in -/+ (y_in >> STAGE_IDX), sign selected by sigma via op
   fp_add_sub #(.WIDTH(WIDTH), .FRACT_W(FRACT_W)) x_adder (
     .a       (x_in),
-    .b       (y_mux),
-    .op      (1'b1),      // subtract
+    .b       (y_shifted),
+    .op      (op_x),
     .sat     (sat),
     .result  (x_comb),
     .overflow(ovf_x)
   );
 
-  // Y path: y_new = y_in + sigma × (x_in >> STAGE_IDX)
+  // Y path: y_new = y_in +/- (x_in >> STAGE_IDX), sign selected by sigma via op
   fp_add_sub #(.WIDTH(WIDTH), .FRACT_W(FRACT_W)) y_adder (
     .a       (y_in),
-    .b       (x_mux),
-    .op      (1'b0),      // add
+    .b       (x_shifted),
+    .op      (op_y),
     .sat     (sat),
     .result  (y_comb),
     .overflow(ovf_y)
