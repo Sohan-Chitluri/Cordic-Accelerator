@@ -30,13 +30,28 @@ module fp_add_sub #(
   // ---------------------------------------------------------------------------
   // COMBINATIONAL DATAPATH
   // ---------------------------------------------------------------------------
-  logic signed [WIDTH-1:0] b_eff;
-  logic signed [WIDTH:0]   sum;
+  // BUGFIX (MIN_NEG): the previous implementation computed `b_eff = op ? -b : b`
+  // at WIDTH-bit precision *before* sign-extending. Unary negation of the most
+  // negative representable value (b == MIN_NEG, e.g. -32768 for WIDTH=16)
+  // overflows within WIDTH bits and silently wraps back to MIN_NEG itself
+  // (two's-complement negation has no representable positive counterpart for
+  // the most-negative value). That corrupted every `a - MIN_NEG` (and
+  // `a - b` where b==MIN_NEG) computation: the true mathematical result
+  // (a + 32768, which should saturate to MAX_POS in sat mode) was silently
+  // replaced by (a + MIN_NEG), losing the overflow detection entirely.
+  //
+  // Fix: sign-extend BOTH operands to WIDTH+1 bits first (which always has
+  // enough headroom to represent -MIN_NEG exactly), then add or subtract at
+  // WIDTH+1-bit precision. This mirrors cordic_pkg::sat_add/sat_sub exactly,
+  // which never had this bug because they never negate a single WIDTH-bit
+  // operand in isolation.
+  logic signed [WIDTH:0] a_ext, b_ext;
+  logic signed [WIDTH:0] sum;
 
   always_comb begin
-    b_eff = op ? -b : b;
-    // Sign-extend both operands to WIDTH+1 bits before adding to detect overflow
-    sum   = {a[WIDTH-1], a} + {b_eff[WIDTH-1], b_eff};
+    a_ext = {a[WIDTH-1], a};
+    b_ext = {b[WIDTH-1], b};
+    sum   = op ? (a_ext - b_ext) : (a_ext + b_ext);
   end
 
   // Saturation and overflow outputs
