@@ -134,8 +134,10 @@ class CordicGoldenModel:
             y <- y + sigma * asr(x, i)     # y-path add
             z <- z - sigma * atan(2^-i)    # z-path (wraps, no saturation)
 
-        Inputs are K-prescaled first. Overflow reflects the LAST stage's
-        x/y saturation only, matching the pipeline's registered `overflow`.
+        Inputs are K-prescaled first. Overflow is the OR of every stage's
+        x/y saturation across the whole chain (matches docs/PIPELINE.md and
+        the RTL's per-transaction overflow delay-line in cordic_pipeline.sv,
+        which ORs stage_overflow[1..ITERATIONS] for the SAME transaction).
         Returns (x_out, y_out, z_out, overflow_flag).
         """
         x = self.k_prescale(x_in)
@@ -159,7 +161,7 @@ class CordicGoldenModel:
             z_b = angle if sigma_pos else -angle
             z_new, _ = self._addsub(z, z_b, sub=True, sat=False)  # z wraps
 
-            overflow = ovf_x or ovf_y   # last-stage overflow (matches RTL)
+            overflow = overflow or ovf_x or ovf_y   # OR across all stages
             x, y, z = x_new, y_new, z_new
 
         return x, y, z, overflow
