@@ -32,6 +32,31 @@ localparam logic         V2_EOVF = 1'b0;
 localparam cordic_data_t VSAT_X = 16'sd30000, VSAT_Y = 16'sd5000, VSAT_Z = 16'sd100;
 localparam logic         VSAT_EOVF = 1'b0;  // No overflow after K-prescale
 
+// Config-attribution test vector: same input, admitted twice back-to-back
+// under DIFFERENT live cfg_saturate values while the first transaction is
+// still in flight. Chosen so saturate vs wrap modes diverge sharply (stage 0
+// overflows on x/y for this input), so the two resulting outputs can only
+// match if each transaction used its OWN admission-time config.
+// Expected values computed via tb/golden_model.py CordicGoldenModel
+// (saturate=True / saturate=False) for x=-20466, y=31176, z=-29053.
+localparam cordic_data_t CFG_X = -16'sd20466, CFG_Y = 16'sd31176, CFG_Z = -16'sd29053;
+localparam cordic_data_t CFG_SAT_EX  = 16'sd32767, CFG_SAT_EY  = 16'sd15120, CFG_SAT_EZ = -16'sd21945;
+localparam logic         CFG_SAT_EOVF = 1'b1;
+localparam cordic_data_t CFG_WRAP_EX = -16'sd31361, CFG_WRAP_EY = 16'sd18665, CFG_WRAP_EZ = -16'sd21945;
+
+// Overflow-attribution test vector: guaranteed to overflow at stages 4-7
+// (including the final stage), so overflow=1 under both a last-stage-only
+// AND an OR-across-all-stages interpretation of the flag — avoiding any
+// dependency on which of those two interpretations is intended. Paired with
+// V1 (45 deg, never overflows at any stage, confirmed by hand-tracing
+// golden_model.py's per-stage internals) to check each transaction's
+// overflow flag is attributable to itself, not to a neighboring in-flight
+// transaction.
+// Expected values from tb/golden_model.py CordicGoldenModel(saturate=True).
+localparam cordic_data_t OVF_X = -16'sd20466, OVF_Y = 16'sd31176, OVF_Z = -16'sd29053;
+localparam cordic_data_t OVF_EX = 16'sd32767, OVF_EY = 16'sd15120, OVF_EZ = -16'sd21945;
+localparam logic         OVF_EOVF = 1'b1;
+
 localparam int VALID_DEPTH = ITERATIONS + 2;  // 10
 localparam int TIMEOUT     = VALID_DEPTH + 6; // 16 — generous margin
 
@@ -290,8 +315,91 @@ module cordic_top_tb;
       $error("[cordic_top] T9:sign_transition: output out of range"); errors++;
     end
 
+    // ---- Test 10: Config attribution — two in-flight transactions, each
+    // must use the cfg_saturate value that was live at ITS OWN admission,
+    // not whatever is live when it happens to complete. Regression for the
+    // cfg_saturate_r-shared-across-all-stages bug (fixed via
+    // cfg_saturate_sr per-transaction shift register in cordic_pipeline.sv).
+    // ----
+    @(negedge clk);
+    cfg_saturate = 1'b1; config_valid = 1'b1;   // config A: saturate
+    @(posedge clk); @(negedge clk);
+    config_valid = 1'b0;
+
+    // Admit TXN_P under config A.
+    @(negedge clk);
+    x_in = CFG_X; y_in = CFG_Y; z_in = CFG_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+
+    // Before TXN_P completes (latency is VALID_DEPTH-ish cycles away),
+    // switch the live config to B: wrap. TXN_P must NOT observe this.
+    @(negedge clk);
+    cfg_saturate = 1'b0; config_valid = 1'b1;   // config B: wrap
+    @(posedge clk); @(negedge clk);
+    config_valid = 1'b0;
+
+    // Admit TXN_Q under config B, one cycle behind TXN_P — both are now
+    // simultaneously in flight at different pipeline depths.
+    @(negedge clk);
+    x_in = CFG_X; y_in = CFG_Y; z_in = CFG_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+
+    wait_output("T10:cfg_attr_P(sat)");
+    chk("T10:cfg_attr_P(sat)", CFG_SAT_EX, CFG_SAT_EY, CFG_SAT_EZ, CFG_SAT_EOVF);
+
+    wait_output("T10:cfg_attr_Q(wrap)");
+    // Wrap mode overflows internally at stage 4 for this vector too (per
+    // golden_model.py stage-by-stage trace), so overflow=1 is expected here
+    // as well — only x_out/y_out/z_out distinguish sat vs wrap attribution.
+    chk("T10:cfg_attr_Q(wrap)", CFG_WRAP_EX, CFG_WRAP_EY, CFG_WRAP_EZ, 1'b1);
+
+    // ---- Test 11: Overflow attribution — a non-overflowing transaction and
+    // an overflowing transaction in flight together (both directions),
+    // verifying each output's overflow flag belongs to its own transaction,
+    // not to whichever other transaction happens to be resident in an
+    // earlier/later pipeline stage that cycle. Regression for the
+    // stage_overflow_accum cross-transaction combinational-OR bug (fixed via
+    // the per-tap overflow delay line / overflow_final in
+    // cordic_pipeline.sv).
+    // ----
+    @(negedge clk);
+    cfg_saturate = 1'b1; config_valid = 1'b1;
+    @(posedge clk); @(negedge clk);
+    config_valid = 1'b0;
+
+    // 11a: no-overflow transaction (V1) admitted first, overflow transaction
+    // (OVF_*) admitted one cycle later while V1 is still in flight.
+    @(negedge clk);
+    x_in = V1_X; y_in = V1_Y; z_in = V1_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    x_in = OVF_X; y_in = OVF_Y; z_in = OVF_Z; // valid_in still 1
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+
+    wait_output("T11a:ovf_attr_noovf_first");
+    chk("T11a:ovf_attr_noovf_first", V1_EX, V1_EY, V1_EZ, V1_EOVF);
+
+    wait_output("T11a:ovf_attr_ovf_second");
+    chk("T11a:ovf_attr_ovf_second", OVF_EX, OVF_EY, OVF_EZ, OVF_EOVF);
+
+    // 11b: reverse order — overflow transaction first, no-overflow second.
+    @(negedge clk);
+    x_in = OVF_X; y_in = OVF_Y; z_in = OVF_Z; valid_in = 1'b1;
+    @(posedge clk); @(negedge clk);
+    x_in = V1_X; y_in = V1_Y; z_in = V1_Z; // valid_in still 1
+    @(posedge clk); @(negedge clk);
+    valid_in = 1'b0;
+
+    wait_output("T11b:ovf_attr_ovf_first");
+    chk("T11b:ovf_attr_ovf_first", OVF_EX, OVF_EY, OVF_EZ, OVF_EOVF);
+
+    wait_output("T11b:ovf_attr_noovf_second");
+    chk("T11b:ovf_attr_noovf_second", V1_EX, V1_EY, V1_EZ, V1_EOVF);
+
     if (errors != 0) $fatal(1, "FAIL: cordic_top — %0d error(s)", errors);
-    else             $display("PASS: cordic_top — All %0d tests passed", 9);
+    else             $display("PASS: cordic_top — All %0d tests passed", 11);
 
     $finish;
   end
