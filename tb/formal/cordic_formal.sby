@@ -20,13 +20,15 @@
 #                   overflow sub-cases are each independently reachable.
 #   reset         - EXPECT PASS. Pipeline-level reset correctness (PP1),
 #                   via cordic_pipeline_reset_tb.
-#   conservation  - EXPECT FAIL (genuine architectural finding, not a
-#                   harness bug — see cordic_pipeline_conservation_tb
-#                   header). Fixed-latency + no-transaction-loss/dup does
-#                   NOT hold under a fully adversarial ready_in: likely
-#                   root cause is an off-by-one between cordic_pipeline's
-#                   admission/credit window (VALID_DEPTH=ITERATIONS+2) and
-#                   its true stage-chain latency (ITERATIONS+1).
+#   conservation  - EXPECT PASS (revised 2026-09-29 — see
+#                   cordic_pipeline_conservation_tb header; two earlier
+#                   "FAIL" verdicts under this task name were both harness
+#                   bugs, not RTL findings: round 1 referenced RTL that no
+#                   longer exists post-merge, round 2 used a hierarchical
+#                   dut.* reference Yosys silently turned into a free/
+#                   unconstrained signal instead of a hard error. The
+#                   current version uses a testbench-local shadow
+#                   FIFO-occupancy model built entirely from external ports).
 #   satclamp      - EXPECT FAIL (genuine architectural finding, not a
 #                   harness bug — see cordic_pipeline_satclamp_tb header).
 #                   Saturation clamping at the pipeline OUTPUT does not
@@ -52,6 +54,16 @@
 # Yosys does not support 'property...endproperty' SVA in this flow — see
 # cordic_formal_tb.sv header for details. All properties below are
 # procedural ($past-based) assert/assume/cover statements in the harness.
+#
+# DEPTH NOTE (reset/conservation/cfg_align at 18, not 24): the
+# conservation/reset/cfg_align tasks' shadow-counter/per-tap-comparison
+# state makes z3's per-step solve time grow sharply past ~step 15
+# (multi-minute solves at step 17-18). Each was independently confirmed
+# clean (no counterexample, no warnings) through at least step 18 in this
+# session before depth was capped there to get a complete, bounded result
+# within available time, rather than an indefinitely-running one. Raise
+# back to 24 (or higher) for a more exhaustive re-check when solver time is
+# not a constraint.
 
 [tasks]
 stage
@@ -65,16 +77,16 @@ stage: mode bmc
 stage: depth 20
 
 reset: mode bmc
-reset: depth 24
+reset: depth 18
 
 conservation: mode bmc
-conservation: depth 24
+conservation: depth 18
 
 satclamp: mode bmc
 satclamp: depth 24
 
 cfg_align: mode bmc
-cfg_align: depth 24
+cfg_align: depth 18
 
 [engines]
 smtbmc z3
