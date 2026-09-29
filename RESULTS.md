@@ -91,3 +91,29 @@ real critical path (steps 1, 3) or can't see it at all pre-route (steps 4,
 5). None of steps 1/3/4/5 broke anything either, so all are kept in the
 frozen flow below as no-cost insurance for future RTL changes that might
 shift which nets have slew/cap/fanout problems.
+
+## Clock sweep (Flow v1, frozen `pr.tcl`, unchanged — only `create_clock -period` varied)
+
+| Clock period | Frequency | WNS (max) | TNS (max) | Worst slack (max) | WHS (min) | Area (um²) / util | Post-route cells | Regression |
+|---|---|---|---|---|---|---|---|---|
+| 11.5 ns | ~87.0 MHz | -1.13 ns | -33.69 ns | -1.13 ns | +0.32 ns | 55503 / 44% | 18547 | 11/11 |
+| 13.0 ns | ~76.9 MHz | 0.00 ns | 0.00 ns | **+0.09 ns** | +0.32 ns | 55581 / 44% | 18557 | not re-run (timing only) |
+| 15.0 ns | ~66.7 MHz | 0.00 ns | 0.00 ns | +2.00 ns | +0.32 ns | 55726 / 44% | 18546 | not re-run (timing only) |
+| 18.0 ns | ~55.6 MHz | 0.00 ns | 0.00 ns | +5.12 ns | +0.32 ns | 55562 / 44% | 18542 | not re-run (timing only) |
+
+**Honest Fmax: the design does not close at the frozen 11.5 ns point.**
+13.0 ns is the tightest sweep point measured to close (+0.09 ns worst
+slack, essentially zero margin — not recommended to freeze at exactly this
+point). 15.0 ns gives +2.00 ns of real margin. Area is flat across the
+sweep (55.5–55.7k um², all within 0.4%) — this design is fanout/logic-depth
+bound, not routing-congestion bound, consistent with the Step 2 diagnosis.
+Only 11.5 ns had its full regression suite re-run in this sweep (timing
+constraints don't affect functional simulation, so the other three points'
+11/11 pass is implied, not independently re-verified here — flagged as
+"not measured" per the task's Rule 4 rather than assumed).
+
+**Recommendation:** freeze **15.0 ns (~66.7 MHz)** as the baseline clock
+for later comparisons — closes with real margin (+2.00 ns, ~13% of the
+period) rather than 13.0 ns's near-zero slack, which would make any future
+RTL change (even a functionally-neutral one) likely to immediately reopen
+a violation.

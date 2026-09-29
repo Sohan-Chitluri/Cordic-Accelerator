@@ -6,11 +6,13 @@
 # -----------------------------------------------------------------------------
 # CLOCK DEFINITION
 # -----------------------------------------------------------------------------
-# Period 11.5ns (~87 MHz): measured post-synthesis Fmax, not an a-priori target
-# (see ADR-0001 — this design has no fixed Fmax requirement, deliberately, to
-# avoid over-constraining a student ASIC flow). 10.0ns (100MHz) failed timing
-# by -1.08ns pre-layout / -0.58ns post-route on the fp_add_sub carry chain;
-# 11.5ns gives ~0.4ns margin above the worst measured violation.
+# Period 11.5ns (~87 MHz) is kept as the frozen point-of-record clock (see
+# BASELINE.md) but is now KNOWN NOT TO CLOSE under Flow v1: real post-route
+# STA (real extracted SPEF, standalone OpenSTA) measures WNS -1.13ns,
+# TNS -33.69ns at this period. The clock sweep in RESULTS.md found 13.0ns
+# is the honest closing point (worst slack +0.09ns). The margin claim that
+# used to be here predates RTL merged after commit dfa2b01 and was never
+# accurate for the current design — see DECISIONS.md.
 create_clock -name clk -period 11.500 [get_ports clk]
 set_clock_uncertainty -setup 0.500 [get_clocks clk]
 set_clock_uncertainty -hold 0.100 [get_clocks clk]
