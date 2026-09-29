@@ -342,55 +342,52 @@ endmodule
 
 
 // =============================================================================
-// MODULE 2b: cordic_pipeline_conservation_tb - FIXED-LATENCY / NO-LOSS-NO-DUP
-// EXPECT FAIL — genuine architectural finding, not a harness bug.
+// MODULE 2b: cordic_pipeline_conservation_tb - NO TRANSACTION LOSS/DUPLICATION
+// REWRITTEN 2026-09-29 against the post-merge cordic_pipeline.sv (Agent A's
+// skid-FIFO + credit-admission rewrite). EXPECT PASS.
 // =============================================================================
 //
-// Claim tested: valid_out(t) == $past(accepted, LAT) for a fixed LAT, where
-// accepted = valid_in && dut.ready_out_int (cordic_pipeline's own internal
-// stage-0 admission signal: `assign stage_valid[0] = valid_in &
-// ready_out_int;`, reconstructed here from two SCALAR signals rather than
-// via a hierarchical reference into the unpacked array dut.stage_valid[0]
-// — that direct reference failed outright the first time it was tried,
-// "Failed to resolve identifier \dut.stage_valid for width detection", a
-// Yosys formal-frontend limitation with hierarchical unpacked-array
-// indexing, not an RTL issue).
+// STALE-HARNESS NOTE: the version of this module that shipped with Agent
+// E's original formal pass referenced `dut.ready_out_int` and compared
+// against `valid_out` directly with a fixed-latency equality
+// (valid_out(t) == $past(accepted, LAT)). Both are now wrong on the
+// current RTL:
+//   - `ready_out_int` no longer exists — cordic_pipeline.sv now has a
+//     single combinational `ready_out`, and stage_valid[0] is gated by
+//     that same signal directly (`valid_in & ready_out`), not by a
+//     separate, further-delayed internal net.
+//   - `valid_out` is no longer a single-cycle "transaction complete" pulse
+//     — it is now "output FIFO non-empty" and HOLDS across many cycles
+//     while a completed transaction waits for `ready_in` (that's the
+//     whole point of Agent A's fix: never overwrite unconsumed data). A
+//     fixed-latency equality against `valid_out` is therefore structurally
+//     the wrong claim for this architecture; it does not even fail for the
+//     reason the old header speculated (a VALID_DEPTH/latency off-by-one),
+//     it fails because it's checking a property that no longer describes
+//     what the interface does at all. This was a pure stale-harness bug —
+//     no evidence of a real RTL defect was ever established by the old
+//     version of this module.
 //
-// RESULT: FALSE for BOTH of the two independently-derived LAT candidates
-// tried (ITERATIONS+1=9, the true stage_valid[0]->valid_out register-chain
-// depth counting 8 cordic_stage hops + 1 output register; and
-// cordic_pipeline's own VALID_DEPTH=ITERATIONS+2=10, the constant its
-// backpressure/credit-tracking shift register `valid_pipe` uses) — BMC
-// finds a counterexample at the same step for both, with ready_in left
-// completely free/unconstrained (a fully adversarial downstream consumer).
+// REWRITTEN CLAIM — two properties, both targeting the internal admission/
+// completion pulses directly (not the level-holding external valid_out),
+// which is what "no transaction loss/duplication" actually means for a
+// FIFO-backed interface:
+//   CB1 (pure register-chain conservation): every admission pulse
+//       (stage_valid[0], gated by the SAME ready_out the producer sees)
+//       produces exactly one FIFO-push pulse (fifo_push =
+//       stage_valid[ITERATIONS]) exactly ITERATIONS cycles later — a
+//       direct consequence of cordic_stage's unconditional 1-cycle
+//       register chain with no stall port, provable as a simple bijective
+//       time-shift equality.
+//   CB2 (FIFO safety / no silent overwrite): fifo_push never occurs when
+//       fifo_count == FIFO_DEPTH. This is the literal negation of the bug
+//       Agent A's fix targets (a completed-but-unconsumed transaction
+//       being silently clobbered) — a genuine FIFO-overflow/data-loss
+//       check on the actual queue, not just the fixed pipe.
 //
-// ROOT CAUSE (most likely, given the evidence below — see report for the
-// exact confidence level and what would nail it down further):
-//   Every cordic_stage instance registers `valid_out <= valid_in`
-//   UNCONDITIONALLY, every cycle — cordic_stage.sv has no stall/enable
-//   input at all, so once a transaction is admitted at stage 0 it marches
-//   straight to the output in exactly ITERATIONS+1 cycles no matter what
-//   ready_in does meanwhile. Admission of NEW transactions, however, is
-//   gated by a SEPARATE credit-style tracker: `valid_pipe`, a
-//   VALID_DEPTH(=10)-deep shift register recording recent accepts, with
-//   `ready_out_int = !valid_pipe[VALID_DEPTH-1] | ready_in`. Because
-//   VALID_DEPTH (10) does not equal the true stage latency (9), this
-//   credit tracker's window is one cycle wider than the pipe it is meant
-//   to protect — under an adversarial ready_in pattern, BMC finds a case
-//   where the credit tracker believes a slot is free one cycle before the
-//   previous occupant has actually vacated the single shared output
-//   register, i.e. two transactions can be made to collide on x_out/y_out/
-//   z_out/valid_out, silently dropping one of them. This is a real
-//   candidate off-by-one between an admission/credit window and the
-//   pipeline's actual physical depth — exactly the class of bug BMC is
-//   good at finding and adversarial-ready_in simulation vectors could
-//   easily miss (it requires a specific ready_in toggle pattern timed
-//   against the credit tracker, not just "back-to-back valid inputs").
-//
-// This is NOT fixed here — cordic_pipeline.sv is owned by the Pipeline RTL
-// agent. See the handback report for the exact counterexample trace path
-// and for how much of this root-cause explanation is confirmed vs.
-// inferred.
+// Both are checked under a fully FREE/adversarial `ready_in` (can stay low
+// indefinitely, or toggle arbitrarily) — the credit-admission scheme is
+// specifically supposed to make both hold regardless of ready_in behavior.
 // =============================================================================
 
 module cordic_pipeline_conservation_tb #(
@@ -399,11 +396,10 @@ module cordic_pipeline_conservation_tb #(
   parameter int ITERATIONS = cordic_pkg::ITERATIONS
 );
 
-  // True stage-chain latency: stage_valid[0] -> (ITERATIONS registered
-  // cordic_stage hops) -> stage_valid[ITERATIONS] -> (1 output register)
-  // -> valid_out. See module header for why this differs from
-  // cordic_pipeline's own VALID_DEPTH=ITERATIONS+2.
-  localparam int STAGE_LATENCY = ITERATIONS + 1;
+  // Matches cordic_pipeline.sv's own VALID_DEPTH = ITERATIONS + 1 (the
+  // FIFO is sized FIFO_DEPTH = VALID_DEPTH there).
+  localparam int FIFO_DEPTH = ITERATIONS + 1;
+  localparam int CNT_W      = $clog2(FIFO_DEPTH + 1);
 
   logic                    clk;
   logic                    rst_n;
@@ -468,32 +464,43 @@ module cordic_pipeline_conservation_tb #(
 
   // config held quiescent — this property does not care about saturation
   // mode; keeping it quiescent avoids entangling this finding with the
-  // separate satclamp/cfg_align findings.
+  // separate satclamp/cfg_align properties.
   always @(posedge clk) begin
     if (rst_n && cyc_count != 8'd0) assume(!config_valid);
   end
 
-  // ready_in is left completely FREE — an adversarial/arbitrary downstream
-  // consumer. This is the environment under which the finding above was
-  // produced; see report for whether a more constrained (but still
-  // reasonable) ready_in still reproduces it.
-  wire accept_probe = valid_in && dut.ready_out_int;
+  // ready_in left completely FREE — adversarial/arbitrary downstream
+  // consumer, including "never ready". The credit-admission scheme is
+  // supposed to make CB1/CB2 hold regardless.
+  wire accept_probe = valid_in && ready_out;   // == stage_valid[0] (ready_out_int no longer exists; this IS stage_valid[0] now)
 
+  // CB1: pure register-chain conservation, ITERATIONS-cycle fixed delay
+  // from admission pulse to FIFO-push pulse.
   always @(posedge clk) begin
-    if (rst_n && cyc_count > STAGE_LATENCY) begin
-      assert (valid_out == $past(accept_probe, STAGE_LATENCY));
+    if (rst_n && cyc_count > ITERATIONS) begin
+      assert (dut.fifo_push == $past(accept_probe, ITERATIONS));
     end
   end
 
-  // Covers: prove accept and complete are each reachable (otherwise this
-  // could "pass" vacuously with the pipe permanently empty), and prove the
-  // external ready_out really does diverge from the internal
-  // ready_out_int that actually gates acceptance — not hypothetical.
+  // CB2: FIFO never silently overflows (the exact bug class Agent A's fix
+  // targets) — a push must never land on an already-full FIFO.
+  always @(posedge clk) begin
+    if (rst_n) begin
+      assert (!(dut.fifo_push && (dut.fifo_count == CNT_W'(FIFO_DEPTH))));
+    end
+  end
+
+  // Covers: prove admission, completion, and a genuinely full FIFO are all
+  // reachable — otherwise CB1/CB2 could pass vacuously (e.g. if
+  // reserved_count's gating were so conservative the FIFO never actually
+  // fills, CB2 would be trivially true and prove nothing about the boundary
+  // case it's meant to check).
   always @(posedge clk) begin
     if (rst_n) begin
       cover (accept_probe);
+      cover (dut.fifo_push);
+      cover (dut.fifo_count == CNT_W'(FIFO_DEPTH));
       cover (valid_out);
-      cover (ready_out != dut.ready_out_int);
     end
   end
 
@@ -504,34 +511,67 @@ endmodule
 
 // =============================================================================
 // MODULE 3: cordic_pipeline_satclamp_tb - SATURATION CLAMP AT PIPELINE OUTPUT
-// EXPECT FAIL — genuine architectural finding, not a harness bug.
+// REWRITTEN 2026-09-29 (twice) against the post-merge cordic_pipeline.sv.
+// EXPECT FAIL — genuine architectural finding, survives both rewrites.
 // =============================================================================
 //
-// Claim tested: valid_out && overflow && cfg_saturate => x_out/y_out
-// clamped to MAX_POS/MIN_NEG. This is the literal "saturation clamping at
-// the pipeline OUTPUT level" property from the task brief.
+// STALE-HARNESS NOTE, round 1: the version that shipped with Agent E's
+// original pass checked the external `overflow`/`x_out`/`y_out` ports
+// (FIFO-read side, decoupled in time from any specific transaction once the
+// FIFO can queue) against the LIVE `dut.cfg_saturate_r` (which, per Agent
+// B's fix, is now deliberately free to change and is no longer what
+// determined any specific transaction's arithmetic) — a comparison between
+// two unrelated points in time. See prior revision of this comment for
+// detail (preserved in git history).
 //
-// RESULT: FALSE. BMC finds a counterexample (see report for the exact
-// trace path: tb/formal/cordic_formal_satclamp/engine_0/trace.vcd).
+// STALE-HARNESS NOTE, round 2: this session's first fix moved the check to
+// PUSH TIME using hierarchical references into cordic_pipeline's internal
+// UNPACKED ARRAYS (`dut.stage_x[ITERATIONS]`, `dut.stage_y[ITERATIONS]`,
+// `dut.cfg_saturate_sr[ITERATIONS-1]`). That failed to elaborate at all —
+// Yosys reported "Identifier implicitly declared" / "Range select out of
+// bounds... Setting result bit to undef" for ALL of these and even the
+// SCALAR signals referenced in the same compound condition (dut.fifo_push,
+// dut.overflow_final), producing a bogus (undef-driven) "counterexample" at
+// step 2 that meant nothing. This is a CONFIRMED, reproduced-twice Yosys
+// formal-frontend limitation with hierarchical references into a
+// submodule's unpacked-array elements (first seen with
+// dut.stage_valid[0] earlier in this file's history) — not specific to
+// $past(), and not an RTL issue.
 //
-// ROOT CAUSE: cordic_pipeline's `overflow` output is
-// `stage_overflow_accum[ITERATIONS]`, an OR-reduction across all 8 stages'
-// (already-OR'd) per-stage overflow flags — i.e. a STICKY "did saturation
-// happen ANYWHERE during this transaction's 8-stage traversal" flag, not a
-// "is the FINAL output currently at the saturation boundary" flag. A stage
-// that clamps x_out to MAX_POS mid-pipeline hands that clamped value to the
-// NEXT stage as ordinary input data; that next stage's arithmetic (which
-// depends on sigma/z, unrelated to whether the previous stage saturated)
-// can move the value away from MAX_POS entirely while the sticky overflow
-// bit stays 1. So a transaction can legitimately finish with overflow=1 and
-// a final x_out/y_out that is nowhere near either boundary.
+// FIX: avoid unpacked-array hierarchical references entirely. Restrict the
+// check to the case where the FIFO is EMPTY immediately before a push
+// (`dut.fifo_count == 0`, `fifo_count` is a plain packed bit vector, not an
+// array — safe to reference): in that case wr_ptr==rd_ptr already, so
+// exactly ONE cycle after the push, valid_out/x_out/y_out/overflow (the
+// external, scalar, port-level signals) are GUARANTEED to reflect this
+// exact just-pushed transaction, with no FIFO-queueing ambiguity. All
+// referenced dut signals (fifo_push, fifo_count, overflow_final,
+// cfg_saturate_r) are scalar/packed. This narrows coverage to the
+// "pipe not backed up" case, but the property under test (does a
+// mid-pipeline clamp survive to the final output) is a fact about the
+// fixed 8-stage arithmetic chain alone, independent of FIFO occupancy —
+// testing it in the simplest reachable scenario is sufficient to confirm
+// or refute that specific root cause.
+//
+// RESULT: STILL FALSE under the scalar-only, tool-reliable harness.
+//
+// ROOT CAUSE (unchanged by the FIFO/config-tagging rework, because it lives
+// entirely inside the fixed 8-stage arithmetic chain, which neither Agent A
+// nor Agent B touched): `overflow_final` is a per-transaction-correct
+// OR-reduction (Agent B's g_ovf_align fix) across all 8 stages' individual
+// overflow flags — "did saturation happen ANYWHERE during this
+// transaction's 8-stage traversal", not "is the FINAL output currently at
+// the saturation boundary". A stage that clamps x_out to MAX_POS
+// mid-pipeline hands that clamped value to the NEXT stage as ordinary
+// input data; that next stage's arithmetic (depending on sigma/z, unrelated
+// to whether the previous stage saturated) can move the value away from
+// MAX_POS entirely while the sticky bit stays 1. So a transaction can still
+// legitimately finish with overflow_final=1 and a final x/y nowhere near
+// either boundary.
 //
 // This is NOT something this agent can fix — cordic_pipeline.sv is owned by
-// the Pipeline RTL agent. It is exactly the kind of subtle multi-stage
-// interaction formal is good at catching and simulation vectors could
-// easily miss (it requires overflow at an EARLY stage followed by enough
-// subsequent stages to move the result off the boundary — a narrow,
-// specific temporal pattern). Reported as an open finding; see handback.
+// the Pipeline RTL agent. Confirmed-still-open finding; see handback report
+// for the counterexample trace path.
 // =============================================================================
 
 module cordic_pipeline_satclamp_tb #(
@@ -610,16 +650,29 @@ module cordic_pipeline_satclamp_tb #(
     if (rst_n && cyc_count != 8'd0) assume(!config_valid);
   end
 
-  // NOTE: gates on dut.cfg_saturate_r (the internal register actually
-  // driving every cordic_stage's `sat` port), NOT the external
-  // `cfg_saturate` port. The external port is a free/don't-care signal
-  // once config_valid is deasserted (see cordic_pipeline.sv: cfg_saturate
-  // is only ever sampled into cfg_saturate_r when config_valid &&
-  // config_ready) — checking against the raw port instead of the register
-  // would test nothing meaningful and could itself produce a spurious
-  // "counterexample" unrelated to the real saturation-clamp question.
+  // FULLY PORT-ONLY formulation — no dut.* hierarchical references at all.
+  // Three different ways of referencing cordic_pipeline's internal
+  // fifo_push/fifo_count/overflow_final/cfg_saturate_r from this specific
+  // module (continuous-assign wire alias, $past() of that alias, and a
+  // plain procedural non-blocking read in always_ff) ALL produced
+  // "Identifier implicitly declared" warnings and an untrustworthy
+  // (undef-driven) counterexample, despite some of those exact same
+  // patterns working cleanly for the same underlying signals elsewhere in
+  // this file (cordic_pipeline_conservation_tb's direct use of
+  // dut.fifo_push/dut.fifo_count). This was not root-caused in the time
+  // available this session — see handback report. Falling back to the
+  // external ports entirely sidesteps it: `valid_out` transitioning from 0
+  // to 1 (i.e. $past(!valid_out) && valid_out) can ONLY happen when the
+  // FIFO was empty and a push just landed — wr_ptr==rd_ptr at that push,
+  // so x_out/y_out/overflow at the cycle valid_out first goes high are
+  // guaranteed (by the FIFO's own read/write pointer logic, which this
+  // property does not need to inspect directly to rely on) to reflect
+  // exactly that just-completed transaction. `cfg_saturate` (external
+  // port) stands in for "was sat mode in effect" since config is held
+  // quiescent for this entire task (assumed above) — the external port and
+  // the internal register are equal throughout under that assumption.
   always @(posedge clk) begin
-    if (rst_n && valid_out && overflow && dut.cfg_saturate_r) begin
+    if (rst_n && $past(!valid_out) && valid_out && overflow && cfg_saturate) begin
       assert (x_out == MAX_POS_F || x_out == MIN_NEG_F);
       assert (y_out == MAX_POS_F || y_out == MIN_NEG_F);
     end
@@ -627,7 +680,7 @@ module cordic_pipeline_satclamp_tb #(
 
   always @(posedge clk) begin
     if (rst_n) begin
-      cover (valid_out && overflow && dut.cfg_saturate_r);
+      cover ($past(!valid_out) && valid_out && overflow && cfg_saturate);
     end
   end
 
@@ -637,34 +690,68 @@ endmodule
 
 
 // =============================================================================
-// MODULE 4: cordic_pipeline_cfg_align_tb - CONFIG/TRANSACTION ALIGNMENT PROBE
-// EXPECT FAIL when config is free — genuine architectural finding.
+// MODULE 4: cordic_pipeline_cfg_align_tb - CONFIG/TRANSACTION ALIGNMENT
+// REWRITTEN 2026-09-29 against the post-merge cordic_pipeline.sv (Agent B's
+// per-transaction cfg_saturate_sr fix). NOT FORMALLY VERIFIED — tool
+// limitation, not an RTL finding either way. Reachability-only task; see
+// TOOL LIMITATION note below and the handback report.
 // =============================================================================
 //
-// Question from the task brief: "does overflow status correspond to the
-// SAME transaction as the data it accompanies" — operationalized here as:
-// for any transaction accepted at cycle t (accepted = valid_in && ready_out
-// true at t), does cordic_pipeline's internal cfg_saturate_r register hold
-// the SAME value at completion time (t + VALID_DEPTH) as it held at accept
-// time t? If not, that transaction's 8 stages did not all see a consistent
-// saturate/wrap mode, because cordic_pipeline broadcasts a single
-// registered cfg_saturate_r combinationally to every cordic_stage
-// instance's `sat` port — there is no per-transaction config tag carried
-// alongside the data through the pipe.
+// STALE-HARNESS NOTE: the old version of this module asserted
+// `dut.cfg_saturate_r == $past(dut.cfg_saturate_r, VALID_DEPTH)` for any
+// accepted transaction — i.e. it demanded the LIVE config register itself
+// stay constant across a transaction's flight time. That claim is now
+// simply wrong to make: Agent B's fix deliberately makes cfg_saturate_r
+// free to change at any time (a config write mid-flight is fine now), and
+// instead threads the value that was live AT ADMISSION through a dedicated
+// per-tap shift register, `cfg_saturate_sr[0:ITERATIONS-1]`, in lockstep
+// with the stage chain, so each stage always sees the config its OWN
+// transaction was admitted under, regardless of later writes. The old
+// property FAILING on the current RTL is not evidence the fix doesn't
+// work — cfg_saturate_r changing mid-flight is now the INTENDED, correctly
+// handled case, and the old harness was directly asserting the opposite of
+// that intent (a straightforward case of the property becoming the wrong
+// claim once the design's contract changed, not a design bug).
 //
-// This uses a hierarchical reference (dut.cfg_saturate_r) into
-// cordic_pipeline's internal register. That register is not a port, but
-// cordic_pipeline.sv is only READ here (instantiated as DUT), never
-// modified — consistent with this agent's file ownership (cordic_pipeline.sv
-// belongs to the Pipeline RTL agent).
+// TOOL LIMITATION — CANNOT FORMALLY VERIFY THE DIRECT CLAIM WITH THIS
+// TOOLCHAIN (reported explicitly per this project's formal-verification
+// guidance, rather than forced through a low-confidence workaround):
 //
-// This property is DELIBERATELY separate from cordic_pipeline_satclamp_tb:
-// that module's property is already false for reasons unrelated to config
-// changes (see its header), so testing config-alignment via the same
-// "final output is clamped" claim would conflate two different root causes.
-// This module isolates the question to purely "did the config register
-// stay stable across one transaction's flight time," with no claim about
-// what the arithmetic result should be.
+// The natural, precise way to state Agent B's fix is "cfg_saturate_sr[k]
+// (now) == $past(cfg_saturate_r, k) for every tap k=1..ITERATIONS-1". That
+// requires reading dut.cfg_saturate_sr[k] — a hierarchical reference into
+// an UNPACKED ARRAY element of cordic_pipeline. This session confirmed
+// (twice: once attempting exactly this property here, once in
+// cordic_pipeline_satclamp_tb for a different array) that this Yosys
+// version does not reliably elaborate such references — even a plain,
+// non-$past, same-cycle read produced "Identifier implicitly declared" /
+// "Range select out of bounds... Setting result bit to undef" and a
+// silently undef-driven bogus counterexample, not a clean error that would
+// at least fail loudly. So the direct per-tap array proof is not available
+// with this toolchain in the time available this session.
+//
+// An indirect proxy was considered (a local shadow shift-register fed only
+// by the scalar dut.cfg_saturate_r, checked against OBSERVABLE x_out/y_out
+// clamp behavior via cordic_pipeline_satclamp_tb's "FIFO empty at push"
+// technique) but rejected: it would conflate this property with
+// cordic_pipeline_satclamp_tb's separate, already-confirmed-FAIL finding
+// (mid-pipeline clamps can be undone by later stages), so a FAIL on that
+// combined test would not distinguish "config alignment is broken" from
+// "the unrelated satclamp issue fired" — a low-confidence result not worth
+// reporting as if it answered the question.
+//
+// What THIS module verifies instead: only reachability `cover`s (below),
+// establishing that the interesting scenario (a transaction accepted, with
+// a config write landing somewhere during its flight, tracked purely via
+// scalar dut.cfg_saturate_r) is a real, reachable trace on the current
+// RTL — i.e. the scenario the original property was meant to probe is not
+// itself vacuous/unreachable. No assert is made about the DUT's per-tap
+// array behavior; there is nothing here for sby to disprove, so this task
+// reports PASS trivially and that PASS should NOT be read as a proof of
+// config/transaction alignment. See handback report for what would
+// actually unblock a real proof (newer Yosys, or cordic_pipeline.sv
+// exposing a scalar debug tap — the latter not implementable by this
+// agent, cordic_pipeline.sv is out of scope).
 // =============================================================================
 
 module cordic_pipeline_cfg_align_tb #(
@@ -672,8 +759,6 @@ module cordic_pipeline_cfg_align_tb #(
   parameter int FRACT_W    = cordic_pkg::FRACT_W,
   parameter int ITERATIONS = cordic_pkg::ITERATIONS
 );
-
-  localparam int VALID_DEPTH = ITERATIONS + 2;
 
   logic                    clk;
   logic                    rst_n;
@@ -736,28 +821,28 @@ module cordic_pipeline_cfg_align_tb #(
   end
 
   // NOTE: config_valid/cfg_saturate are left completely FREE every cycle —
-  // a config write is allowed to land while a transaction is mid-flight.
-  // This is the whole point of this probe.
-
+  // a config write is allowed to land at any time, including while
+  // transactions are mid-flight. No assert is made here — see TOOL
+  // LIMITATION note in the module header. Only reachability covers below,
+  // using scalar dut.cfg_saturate_r only (confirmed reliably readable
+  // throughout this file — the array dut.cfg_saturate_sr[k] is not used).
   logic accepted;
   assign accepted = valid_in && ready_out;
 
-  // Alignment property: whatever cfg_saturate_r a transaction saw at
-  // ACCEPT time, it should still see at COMPLETE time (VALID_DEPTH cycles
-  // later) — i.e. no config write landed mid-flight for that transaction.
-  always @(posedge clk) begin
-    if (rst_n && cyc_count > VALID_DEPTH && $past(accepted, VALID_DEPTH)) begin
-      assert (dut.cfg_saturate_r == $past(dut.cfg_saturate_r, VALID_DEPTH));
-    end
-  end
+  // Local alias: dut.cfg_saturate_r used directly (fine) throughout, but
+  // needs to be a local name when passed to $past() (see satclamp module
+  // for the confirmed rule this works around).
+  wire cfg_sat_l = dut.cfg_saturate_r;
 
-  // Covers: prove both "a transaction is accepted" and "config actually
-  // changes at some point" are reachable, so a FAIL here is a genuine
-  // demonstration of mid-flight config drift, not a vacuous antecedent.
   always @(posedge clk) begin
     if (rst_n) begin
       cover (accepted);
-      cover (dut.cfg_saturate_r != $past(dut.cfg_saturate_r));
+      cover (cfg_sat_l != $past(cfg_sat_l));
+      // A transaction accepted ITERATIONS-1 cycles ago, with a config
+      // change having landed somewhere in that window — the scenario the
+      // (unprovable-with-this-toolchain) property was meant to probe.
+      cover ($past(accepted, ITERATIONS - 1) &&
+             (cfg_sat_l != $past(cfg_sat_l, ITERATIONS - 1)));
     end
   end
 
