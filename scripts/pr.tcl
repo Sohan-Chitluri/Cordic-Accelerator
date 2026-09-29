@@ -129,18 +129,39 @@ detailed_placement
 check_placement
 
 # -----------------------------------------------------------------------------
+# ROUTING (global pass)
+# -----------------------------------------------------------------------------
+global_route
+
+# -----------------------------------------------------------------------------
+# POST-GLOBAL-ROUTE TIMING REPAIR (Flow v1, step 5 of 5)
+# estimate_parasitics -global_routing gives repair_timing RC from actual
+# global-route topology, much closer to final routed parasitics than the
+# placement-stage estimate step 4 used -- this is the last point before
+# detailed_route where repair_timing can still legally move/insert cells.
+# Any cell moves/insertions invalidate the earlier legalization and filler
+# fill, so re-legalize and re-route globally before filling gaps and
+# running detailed_route.
+# -----------------------------------------------------------------------------
+estimate_parasitics -global_routing
+repair_timing -setup
+detailed_placement
+check_placement
+global_route
+
+# -----------------------------------------------------------------------------
 # FILLER CELLS
 # Detailed placement legalizes cell positions but doesn't require rows to be
 # fully abutted — leftover gaps between cells break the continuous N-well
 # strip each row shares, which fails Sky130 nwell width/spacing DRC (nwell.1,
-# nwell.2a). Filling every gap restores a continuous row.
+# nwell.2a). Filling every gap restores a continuous row. Done last (after
+# repair_timing's cell moves/insertions) so fillers aren't left stale.
 # -----------------------------------------------------------------------------
 filler_placement {sky130_fd_sc_hd__fill_1 sky130_fd_sc_hd__fill_2 sky130_fd_sc_hd__fill_4 sky130_fd_sc_hd__fill_8}
 
 # -----------------------------------------------------------------------------
-# ROUTING
+# ROUTING (detailed pass)
 # -----------------------------------------------------------------------------
-global_route
 detailed_route
 
 # -----------------------------------------------------------------------------

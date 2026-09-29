@@ -65,3 +65,29 @@ SPEF: a placement-stage RC *estimate* still isn't close enough to actual
 routed parasitics to see the real -1.13 ns carry-chain violation, so
 `repair_timing` has nothing to act on and makes no changes. Zero effect on
 any measured number, confirmed.
+
+| Flow v1 step 5 | + `estimate_parasitics -global_routing` / `repair_timing -setup` after `global_route`, then re-legalize + re-route globally before fill/detailed_route | 11/11 | -1.13 ns (unchanged) | -33.69 ns (unchanged) | +0.32 ns | 18547 (unchanged) | 55503 / 44% (unchanged) |
+
+**Step 5 finding — the important negative result.** Even with parasitics
+estimated from actual global-route topology (much closer to final routing
+than step 4's placement-stage estimate), `repair_timing -setup` again
+logged **"No setup violations found."** OpenROAD's own internal timer,
+at every pre-detailed-route stage this flow offers, cannot see the -1.13 ns
+carry-chain violation that the standalone OpenSTA run finds against the
+real extracted SPEF after detailed routing. This empirically validates the
+premise of `sta_postroute.tcl`'s existence (see its header comment): an
+inline "post-route-adjacent" OpenROAD timing report is not sufficient
+evidence of real timing, in either direction — Flow v0's ideal-wire report
+said the design closed when it violated by -24ns; Flow v1's global-route
+estimate says it closes when it still violates by -1.13ns. Routing
+converged cleanly (0 DRC violations after re-route, matching Flow v0's
+clean route) and regression is 11/11.
+
+**Summary of the 5-step buildup:** step 2 (`-timing_driven` placement) did
+essentially all of the work (-24.18ns → -1.13ns). Steps 1, 3, 4, and 5 each
+measured zero further change — not because they're broken, but because
+they operate on RC estimates/repair targets that either don't reach the
+real critical path (steps 1, 3) or can't see it at all pre-route (steps 4,
+5). None of steps 1/3/4/5 broke anything either, so all are kept in the
+frozen flow below as no-cost insurance for future RTL changes that might
+shift which nets have slew/cap/fanout problems.
