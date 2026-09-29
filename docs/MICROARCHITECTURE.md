@@ -82,11 +82,15 @@ Implemented via 16-entry LUT in `cordic_lut`: input `x_in[15:12]` (4 MSBs) → p
 
 | Stage | Function | Registers | Latency |
 |-------|----------|-----------|---------|
-| **Input** | K-prescale LUT, input register | `x_reg`, `y_reg`, `z_reg`, `valid_reg` | 1 cycle |
-| **Stage 0..N-1** | CORDIC iteration i | `x_reg`, `y_reg`, `z_reg`, `valid_reg` | N cycles |
-| **Output** | Output register | `x_out`, `y_out`, `z_out`, `valid_out` | 1 cycle |
+| **Admission** | K-prescale LUT (combinational), no dedicated input register | — (feeds Stage 0 directly) | 0 cycles |
+| **Stage 0..N-1** | CORDIC iteration i | `stage_x/y/z[i+1]`, `stage_valid[i+1]` (inside `cordic_stage`) | N cycles |
+| **Output FIFO** | Elastic skid FIFO, not a single overwritten register | `fifo_x/y/z/ovf[wr_ptr]` | 1 cycle (same cycle as the last stage register — `fifo_push = stage_valid[ITERATIONS]`) |
 
-**Total Pipeline Depth = ITERATIONS + 2 cycles**
+**Total Pipeline Depth (VALID_DEPTH) = ITERATIONS + 1 cycles.** (Corrected
+post-repair: the original `ITERATIONS + 2` figure assumed a dedicated input
+register that was never implemented in the RTL — see `docs/PIPELINE.md` for
+the full as-built architecture, including the output skid FIFO that replaced
+the single output register shown above.)
 
 ### 3.1 Stage Internals (`cordic_stage`)
 
@@ -297,11 +301,11 @@ end
 ## 12. Signal Flow Summary
 
 ```
-Input:  (x_in, y_in, z_in) ──► [K-prescale LUT] ──► Stage 0 ──► Stage 1 ──► ... ──► Stage N-1 ──► Output Reg ──► (x_out, y_out, z_out)
-            │                                                                                       │
-            │                                                                                       │
-            └───────────────────────── valid_pipe ──────────────────────────────────────────────────┘
-                           (shifts each cycle, length = ITERATIONS+2)
+Input:  (x_in, y_in, z_in) ──► [K-prescale LUT, comb.] ──► Stage 0 ──► Stage 1 ──► ... ──► Stage N-1 ──► Output FIFO (elastic) ──► (x_out, y_out, z_out)
+            │                                                                                            │
+            │                                                                                            │
+            └────────────────────── stage_valid[0..N] shift chain, length = ITERATIONS+1 ────────────────┘
+                    (no dedicated input register; FIFO holds every completed transaction until ready_in — see docs/PIPELINE.md)
 ```
 
 ---

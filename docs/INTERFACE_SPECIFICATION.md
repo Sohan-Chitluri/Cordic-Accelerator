@@ -286,9 +286,9 @@ module cordic_pipeline #(
 
 **Internal Structure:**
 - `cordic_lut` (1 instance)
-- `cordic_stage` (ITERATIONS instances)
-- Valid pipeline shift register (ITERATIONS+2 deep)
-- Config register + handshake
+- `cordic_stage` (ITERATIONS instances) — stage_valid shift chain, ITERATIONS+1 deep (no dedicated input register)
+- Output skid FIFO (depth ITERATIONS+1) + credit-based admission — see `docs/PIPELINE.md`
+- Config register + per-transaction config-tag shift register + handshake
 
 ---
 

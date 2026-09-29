@@ -25,7 +25,7 @@
 |----|-------------|-------------|
 | FR-01 | **Rotation Mode** | Compute `x_out = K × (x_in cos(z_in) - y_in sin(z_in))`, `y_out = K × (x_in sin(z_in) + y_in cos(z_in))`, `z_out ≈ 0` for input vector `(x_in, y_in)` and angle `z_in`. **Input angle range restricted to approximately ±1.74 rad (~±99.5°)** — the standard CORDIC convergence zone for 8 iterations. Inputs outside this range produce undefined results. Full ±π range via quadrant folding is deferred to V2. |
 | FR-02 | **Parameterized Precision** | Data width `WIDTH` (default 16), fractional bits `FRACT_W` (default 12), iteration count `ITERATIONS` (default 8) all parameterizable at elaboration. |
-| FR-03 | **Pipelined Execution** | One input vector accepted per cycle after pipeline fill; latency = `ITERATIONS + 2` cycles; throughput = 1 vector/cycle. |
+| FR-03 | **Pipelined Execution** | One input vector accepted per cycle after pipeline fill (subject to output-FIFO admission credit — see `docs/PIPELINE.md` §7); latency = `ITERATIONS + 1` cycles (no dedicated input-capture register); throughput = 1 vector/cycle. |
 | FR-04 | **Configurable Saturation** | Saturating or wrap-around arithmetic selectable via configuration. |
 | FR-05 | **K-Factor Prescaling** | Input vector automatically scaled by CORDIC gain `K ≈ 0.607252935` via a multiplier-free shift-add constant network (K_FACTOR = 2488/4096, 0.028% error vs. true K), eliminating post-processing multiplication. |
 | FR-06 | **Simple Configuration** | Runtime configuration via `config_valid/ready` handshake (no AXI). |
@@ -56,7 +56,7 @@
 |---------|-------------|
 | **Rotation Mode** | Sine/cosine generation, vector rotation by angles in ≈ [−1.74, +1.74] rad (~±99.5°). No quadrant folding in V1. |
 | **Parameterized Datapath** | `WIDTH`, `FRACT_W`, `ITERATIONS` as elaboration-time parameters. |
-| **Pipelined Datapath** | `ITERATIONS` stages + input/output registers. |
+| **Pipelined Datapath** | `ITERATIONS` fixed-latency stage registers draining into an elastic output skid FIFO (no dedicated input register — see `docs/PIPELINE.md`). |
 | **Fixed Per-Stage Shifts** | Shift amount hardwired per stage (eliminates barrel shifter). |
 | **LUT-Based Angle Table** | Combinational `atan(2⁻ⁱ)` for `i = 0..ITERATIONS-1`. |
 | **Shift-Add Constant K-Factor Prescaling** | Input vector pre-multiplied by `K ≈ 2488/4096` via a multiplier-free shift-add network. See ADR-0005. |
@@ -114,27 +114,31 @@
 | Metric | Target | Notes |
 |--------|--------|-------|
 | **Throughput** | 1 vector/cycle | After pipeline fill |
-| **Latency** | `ITERATIONS + 2` cycles | Default: 10 cycles (8 iterations + 1 input reg + 1 output reg) |
+| **Latency** | `ITERATIONS + 1` cycles | Default: 9 cycles (8 iteration-stage registers + FIFO storage register; no dedicated input-capture register — see `docs/PIPELINE.md`) |
 | **Numerical Accuracy** | ≤ 0.1° angle error | 8 iterations, 16-bit, Q12 format |
 | **Gain Accuracy** | < 0.1% K-factor error | Shift-add K-prescaling: K = 2488/4096, 0.028% vs. true K; within spec NFR-05 |
 | **Fmax** | Measured post-synthesis | No fixed target; design for correct timing at reasonable frequency |
 | **Area** | < 50k GE | Post-synthesis estimate |
-| **Pipeline Fill** | `ITERATIONS + 2` cycles | First valid output |
+| **Pipeline Fill** | `ITERATIONS + 1` cycles | First valid output |
 
 ---
 
 ## 8. Latency Analysis
 
 ```
-Cycle 0:    Input register (x_in, y_in, z_in) + K-prescale (shift-add, combinational)
-Cycle 1:    Stage 0 (shift by 0, add/sub)
-Cycle 2:    Stage 1 (shift by 1, add/sub)
+Cycle 0:    Admission (K-prescale + stage 0 input, combinational — no
+            dedicated input-capture register) -> registered into stage 0
+Cycle 1:    Stage 0 output registered (shift by 0, add/sub)
+Cycle 2:    Stage 1 output registered (shift by 1, add/sub)
 ...
-Cycle N:    Stage N-1 (shift by N-1, add/sub)
-Cycle N+1:  Output register
+Cycle N:    Stage N-1 output registered (shift by N-1, add/sub) — this IS
+            the output-FIFO push (fifo_push = stage_valid[ITERATIONS])
 ```
 
-**Total Latency = ITERATIONS + 2 cycles** (input reg + N stages + output reg)
+**Total Latency = ITERATIONS + 1 cycles** (N stage registers + FIFO storage
+register; there is no separate input or output register — see
+`docs/PIPELINE.md` for the as-built architecture and root-cause history of
+this correction).
 
 ---
 
