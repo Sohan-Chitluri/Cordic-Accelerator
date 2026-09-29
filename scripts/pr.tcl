@@ -61,6 +61,17 @@ tapcell -tapcell_master sky130_fd_sc_hd__tapvpwrvgnd_1 -distance 15
 place_pins -hor_layers met3 -ver_layers met2
 
 # -----------------------------------------------------------------------------
+# WIRE RC ESTIMATE (Flow v1, step 1 of 5)
+# global_placement has no timing signal without this: it computes R/C per
+# unit length from the tech LEF's per-layer RPERSQ/CPERSQDIST for met2
+# (dominant signal-routing layer by measured wirelength: 59629um vs met1's
+# 53741um in the Flow v0 route report) and met3 (used for clock buffering
+# in this flow's clock_tree_synthesis step below).
+# -----------------------------------------------------------------------------
+set_wire_rc -signal -layer met2
+set_wire_rc -clock -layer met3
+
+# -----------------------------------------------------------------------------
 # GLOBAL PLACEMENT
 # -----------------------------------------------------------------------------
 global_placement -density 0.6
