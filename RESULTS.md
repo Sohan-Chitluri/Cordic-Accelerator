@@ -53,3 +53,15 @@ to spare, not on the critical carry chain. **Conclusion: explicit
 `repair_design` is redundant given `-timing_driven` placement is already
 present** — kept in the flow for now since it's harmless and cheap, but it
 is not the reason Step 2 closed most of the gap.
+
+| Flow v1 step 4 | + `set_propagated_clock` / `estimate_parasitics -placement` / `repair_timing -setup` after CTS (re-legalized) | 11/11 | -1.13 ns (unchanged) | -33.69 ns (unchanged) | +0.32 ns | 18547 (unchanged) | 55503 / 44% (unchanged) |
+
+**Step 4 finding:** `repair_timing -setup` logged **"No setup violations
+found"** at this stage — i.e. against a placement-based RC estimate with a
+propagated (post-CTS) clock, OpenROAD's own internal timer believes the
+design already closes. This is the same optimism gap `sta_postroute.tcl`'s
+header comment warns about for OpenROAD's resident timer vs. real extracted
+SPEF: a placement-stage RC *estimate* still isn't close enough to actual
+routed parasitics to see the real -1.13 ns carry-chain violation, so
+`repair_timing` has nothing to act on and makes no changes. Zero effect on
+any measured number, confirmed.

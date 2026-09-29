@@ -116,6 +116,19 @@ clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_4 -buf_list sky130_fd_sc_
 detailed_placement
 
 # -----------------------------------------------------------------------------
+# POST-CTS TIMING REPAIR (Flow v1, step 4 of 5)
+# Real clock tree now exists (post-CTS), so repair against the propagated
+# clock rather than the ideal clock used during placement -- CTS insertion
+# delay/skew can change which paths are critical. estimate_parasitics
+# -placement gives repair_timing an RC estimate before routing exists.
+# -----------------------------------------------------------------------------
+set_propagated_clock [all_clocks]
+estimate_parasitics -placement
+repair_timing -setup
+detailed_placement
+check_placement
+
+# -----------------------------------------------------------------------------
 # FILLER CELLS
 # Detailed placement legalizes cell positions but doesn't require rows to be
 # fully abutted — leftover gaps between cells break the continuous N-well
