@@ -83,6 +83,18 @@ detailed_placement
 check_placement
 
 # -----------------------------------------------------------------------------
+# DESIGN REPAIR (Flow v1, step 3 of 5)
+# Fixes max_cap/max_slew/max_fanout violations by inserting buffers and
+# upsizing gates -- the mechanism that actually targets a single min-drive
+# cell driving many fanout pins (the Step 1 diagnosis / Step 2's remaining
+# carry-chain slew). Requires legal placement (just done above) and must be
+# followed by detailed_placement to re-legalize newly inserted/resized cells.
+# -----------------------------------------------------------------------------
+repair_design
+detailed_placement
+check_placement
+
+# -----------------------------------------------------------------------------
 # POWER DISTRIBUTION NETWORK
 # TritonRoute (detailed_route below) requires power/ground nets to have real
 # rail geometry and be classified as special nets; without this step it

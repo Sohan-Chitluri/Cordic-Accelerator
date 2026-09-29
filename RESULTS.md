@@ -39,3 +39,17 @@ under the much larger config-fanout problem until placement got timing
 awareness. Slack is now tightly clustered (-1.04 to -1.13 ns across all 20
 endpoints), i.e. a single structural bottleneck, not a long tail.
 Regression: 11/11 (RTL untouched).
+
+| Flow v1 step 3 | + explicit `repair_design` after detailed placement (re-legalized) | 11/11 | -1.13 ns (unchanged) | -33.69 ns (unchanged) | +0.32 ns | 18547 (unchanged) | 55503 / 44% (unchanged) |
+
+**Step 3 finding:** the explicit `repair_design` call did do work — log shows
+it found 19 slew violations, resized 19 instances, and inserted 28 buffers
+in 20 nets — but final post-route WNS/TNS/area/cell-count are all
+bit-identical to Step 2. `-timing_driven` global placement already runs its
+own internal repair_design pass (visible in the log as `GPL-0107
+"Timing-driven: repair_design"`), and it already covers the paths that
+matter; the slew violations my explicit call fixed were on nets with slack
+to spare, not on the critical carry chain. **Conclusion: explicit
+`repair_design` is redundant given `-timing_driven` placement is already
+present** — kept in the flow for now since it's harmless and cheap, but it
+is not the reason Step 2 closed most of the gap.
