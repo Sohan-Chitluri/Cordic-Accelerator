@@ -72,9 +72,9 @@ set_wire_rc -signal -layer met2
 set_wire_rc -clock -layer met3
 
 # -----------------------------------------------------------------------------
-# GLOBAL PLACEMENT
+# GLOBAL PLACEMENT (Flow v1, step 2 of 5: -timing_driven)
 # -----------------------------------------------------------------------------
-global_placement -density 0.6
+global_placement -density 0.6 -timing_driven
 
 # -----------------------------------------------------------------------------
 # DETAILED PLACEMENT
