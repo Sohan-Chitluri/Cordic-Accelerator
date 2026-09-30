@@ -35,7 +35,18 @@ opt
 # Technology mapping - Sky130 HD standard cell library (typical corner)
 # See docs/PLACE_ROUTE_DRC.md for how pdk/sky130_fd_sc_hd_lib is populated.
 dfflibmap -liberty pdk/sky130_fd_sc_hd_lib/sky130_fd_sc_hd__tt_025C_1v80.lib
-abc -liberty pdk/sky130_fd_sc_hd_lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# Experiment 2 (b)(i): timing-driven ABC, RTL unchanged. Without -D/-constr,
+# `abc -liberty` never runs its cell-sizing passes at all (per `yosys -p
+# "help abc"`, upsize/dnsize only appear in ABC's default script when BOTH
+# flags are given) -- confirmed empirically: every carry-chain cell in the
+# Flow-v0/v1 design was the weakest (_1) drive-strength variant despite the
+# library stocking _2/_4 of each. -D is the 11.5ns SDC clock period in
+# picoseconds; scripts/abc_constr.txt gives ABC a driving-cell/load
+# assumption for its internal delay estimates during upsize/dnsize (SDC
+# input/output delays aren't visible to ABC at this stage, so this is an
+# approximation, not the actual SDC I/O timing).
+abc -liberty pdk/sky130_fd_sc_hd_lib/sky130_fd_sc_hd__tt_025C_1v80.lib -D 11500 -constr scripts/abc_constr.txt
 
 # Map constant-1/0 connections to real tie cells. Without this, constant nets
 # stay as bare Verilog literals (`assign net = 1'h1;`); OpenROAD's link_design
