@@ -42,17 +42,23 @@ Regression: 11/11 (RTL untouched).
 
 | Flow v1 step 3 | + explicit `repair_design` after detailed placement (re-legalized) | 11/11 | -1.13 ns (unchanged) | -33.69 ns (unchanged) | +0.32 ns | 18547 (unchanged) | 55503 / 44% (unchanged) |
 
-**Step 3 finding:** the explicit `repair_design` call did do work — log shows
-it found 19 slew violations, resized 19 instances, and inserted 28 buffers
-in 20 nets — but final post-route WNS/TNS/area/cell-count are all
-bit-identical to Step 2. `-timing_driven` global placement already runs its
-own internal repair_design pass (visible in the log as `GPL-0107
-"Timing-driven: repair_design"`), and it already covers the paths that
-matter; the slew violations my explicit call fixed were on nets with slack
-to spare, not on the critical carry chain. **Conclusion: explicit
-`repair_design` is redundant given `-timing_driven` placement is already
-present** — kept in the flow for now since it's harmless and cheap, but it
-is not the reason Step 2 closed most of the gap.
+**Step 3 finding — CORRECTED.** The original text of this section claimed
+the explicit `repair_design` call "did do work" (19 slew violations fixed,
+19 instances resized, 28 buffers inserted). That was a misreading and is
+wrong: re-checked by line number against the log, the `RSZ-0034`/`RSZ-0039`/
+`RSZ-0038` messages appear at line 149, *before* the first post-placement
+`detailed_placement`/`check_placement` output (line 246) — i.e. they are
+emitted by step 2's `-timing_driven global_placement` call itself, not by
+this step's explicit `repair_design` line, which runs later. Verified this
+is the same single occurrence, in the same position, in the step 2 (v1b)
+log too. Grepping for `RSZ-0034` occurrence *counts* confirms it: exactly
+one occurrence in every one of steps 2/3/4/5's logs — never two — so no
+step after step 2 ever triggered its own resize/buffer event.
+**Corrected conclusion: the explicit `repair_design` call in this step is a
+true no-op — it found and fixed nothing.** All resizing/buffering on this
+design happens once, inside `-timing_driven` placement. Kept in the flow as
+harmless, zero-cost insurance for future RTL changes, not because it did
+anything here.
 
 | Flow v1 step 4 | + `set_propagated_clock` / `estimate_parasitics -placement` / `repair_timing -setup` after CTS (re-legalized) | 11/11 | -1.13 ns (unchanged) | -33.69 ns (unchanged) | +0.32 ns | 18547 (unchanged) | 55503 / 44% (unchanged) |
 
@@ -83,14 +89,23 @@ estimate says it closes when it still violates by -1.13ns. Routing
 converged cleanly (0 DRC violations after re-route, matching Flow v0's
 clean route) and regression is 11/11.
 
-**Summary of the 5-step buildup:** step 2 (`-timing_driven` placement) did
-essentially all of the work (-24.18ns → -1.13ns). Steps 1, 3, 4, and 5 each
-measured zero further change — not because they're broken, but because
-they operate on RC estimates/repair targets that either don't reach the
-real critical path (steps 1, 3) or can't see it at all pre-route (steps 4,
-5). None of steps 1/3/4/5 broke anything either, so all are kept in the
-frozen flow below as no-cost insurance for future RTL changes that might
-shift which nets have slew/cap/fanout problems.
+**Summary of the 5-step buildup (corrected):** step 2 (`-timing_driven`
+placement) did **all** of the measured work (-24.18ns → -1.13ns) and is the
+only step that ever inserted a buffer or resized a cell — confirmed by
+grepping `RSZ-0034`/`RSZ-0038`/`RSZ-0039` occurrence counts across every
+step's log: exactly one occurrence total, always at the same position
+(inside step 2's `global_placement -timing_driven` call, before any later
+step's `detailed_placement`/`repair_design`/`repair_timing` runs). Step 1
+(`set_wire_rc` alone, no resizing) measured no change because an RC
+estimate without resizing can't fix a drive-strength problem. Steps 3, 4,
+and 5 are **confirmed true no-ops** — step 3's `repair_design` found zero
+violations (everything already fixed by step 2), and steps 4/5's
+`repair_timing -setup` explicitly logged "No setup violations found" at
+every stage OpenROAD's own estimate can see. None of steps 1/3/4/5 broke
+anything, so all are kept in the frozen flow as zero-cost insurance for
+future RTL changes that might shift which nets have slew/cap/fanout
+problems — but the honest accounting is that only step 2 is load-bearing
+for the numbers in this document.
 
 ## Clock sweep (Flow v1, frozen `pr.tcl`, unchanged — only `create_clock -period` varied)
 
