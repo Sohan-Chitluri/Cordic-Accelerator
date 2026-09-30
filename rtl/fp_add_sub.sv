@@ -10,50 +10,10 @@
 
 import cordic_pkg::*;
 
-// Experiment 2b, step 3 (forced structure): a plain generate-based
-// carry-select adder gets erased by synthesis -- Yosys's `flatten` merges
-// it into the top-level combinational network, after which `abc -liberty`
-// (even with -D/-constr; verified across an 800-11500ps sweep with
-// byte-identical netlists produced) re-derives whatever is smallest for
-// Sky130 HD, which is a maj3-based ripple chain, regardless of source
-// RTL topology. `(* keep_hierarchy *)` on this submodule makes `flatten`
-// leave its instances as opaque module boundaries, so ABC maps each one
-// as its own bounded combinational block (real I/O port timing arcs, not
-// mergeable into the surrounding network) instead of dissolving it back
-// into one global 17-bit boolean network. This is a forced-structure
-// workaround for a synthesis-flow limitation, not an RTL algorithm
-// change -- see RESULTS.md Experiment 2(ii)/2b for the measurements that
-// motivated it.
-(* keep_hierarchy *)
-module fp_csa_block #(
-  parameter int BW = 4
-) (
-  input  logic [BW-1:0] a,
-  input  logic [BW-1:0] b,
-  output logic [BW-1:0] sum_c0,
-  output logic [BW-1:0] sum_c1,
-  output logic          cout_c0,
-  output logic          cout_c1
-);
-  logic [BW:0] s0, s1;
-
-  assign s0 = {1'b0, a} + {1'b0, b};
-  assign s1 = {1'b0, a} + {1'b0, b} + 1'b1;
-
-  assign sum_c0  = s0[BW-1:0];
-  assign sum_c1  = s1[BW-1:0];
-  assign cout_c0 = s0[BW];
-  assign cout_c1 = s1[BW];
-endmodule
-
 module fp_add_sub #(
   parameter int WIDTH            = cordic_pkg::WIDTH,
   parameter int FRACT_W          = cordic_pkg::FRACT_W,
-  parameter bit USE_CARRY_SELECT = 1'b1,
-  // Carry-select block width in bits. See fp_csa_block above for why this
-  // now uses forced-hierarchy submodule instances rather than plain
-  // generate-block assigns (Experiment 2(ii) result).
-  parameter int CSA_BLOCK         = 4
+  parameter bit USE_CARRY_SELECT = 1'b1
 ) (
   input  logic signed [WIDTH-1:0] a,
   input  logic signed [WIDTH-1:0] b,
@@ -87,64 +47,12 @@ module fp_add_sub #(
   // operand in isolation.
   logic signed [WIDTH:0] a_ext, b_ext;
   logic signed [WIDTH:0] sum;
-  localparam int EXT_W = WIDTH + 1;
 
   always_comb begin
     a_ext = {a[WIDTH-1], a};
     b_ext = {b[WIDTH-1], b};
+    sum   = op ? (a_ext - b_ext) : (a_ext + b_ext);
   end
-
-  // a_ext - b_ext == a_ext + (~b_ext) + 1 (mod 2^EXT_W), exact and not just
-  // modular: a and b are each within [-2^(WIDTH-1), 2^(WIDTH-1)-1], so the
-  // true sum/difference always has magnitude <= 2^WIDTH, exactly
-  // representable in EXT_W = WIDTH+1 signed bits with no wraparound -- the
-  // same fact the original a_ext +/- b_ext computation relied on. This lets
-  // add and subtract share one carry-select adder with a variable initial
-  // carry-in (op).
-  logic [WIDTH:0] b_eff;
-  logic           cin0;
-  logic [WIDTH:0] sum_bits;
-
-  assign b_eff = b_ext ^ {(WIDTH+1){op}};
-  assign cin0  = op;
-
-  generate
-    if (USE_CARRY_SELECT) begin : g_csa
-      localparam int NBLK = (EXT_W + CSA_BLOCK - 1) / CSA_BLOCK;
-      logic [NBLK-1:0] blk_cin, blk_cout;
-
-      for (genvar blk = 0; blk < NBLK; blk++) begin : g_block
-        localparam int LO = blk * CSA_BLOCK;
-        localparam int HI = ((LO + CSA_BLOCK) > EXT_W) ? (EXT_W - 1) : (LO + CSA_BLOCK - 1);
-        localparam int BW = HI - LO + 1;
-
-        logic [BW-1:0] sum_c0, sum_c1;
-        logic          cout_c0, cout_c1;
-
-        fp_csa_block #(.BW(BW)) u_block (
-          .a       (a_ext[HI:LO]),
-          .b       (b_eff[HI:LO]),
-          .sum_c0  (sum_c0),
-          .sum_c1  (sum_c1),
-          .cout_c0 (cout_c0),
-          .cout_c1 (cout_c1)
-        );
-
-        if (blk == 0) begin : g_cin_first
-          assign blk_cin[blk] = cin0;
-        end else begin : g_cin_rest
-          assign blk_cin[blk] = blk_cout[blk-1];
-        end
-
-        assign sum_bits[HI:LO] = blk_cin[blk] ? sum_c1 : sum_c0;
-        assign blk_cout[blk]   = blk_cin[blk] ? cout_c1 : cout_c0;
-      end
-    end else begin : g_ripple
-      assign sum_bits = a_ext + b_eff + cin0;
-    end
-  endgenerate
-
-  assign sum = signed'(sum_bits);
 
   // Saturation and overflow outputs
   always_comb begin
