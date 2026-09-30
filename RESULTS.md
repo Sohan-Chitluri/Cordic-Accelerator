@@ -152,6 +152,46 @@ variant despite the library stocking `_2`/`_4` of each.
 | Sub-experiment | Change | Regression | WNS (max) | TNS (max) | WHS (min) | Area (um²) / util | Post-route cells |
 |---|---|---|---|---|---|---|---|
 | (i) timing-driven ABC | `abc -liberty ... -D 11500 -constr scripts/abc_constr.txt` (11.5ns period in ps, `set_driving_cell sky130_fd_sc_hd__buf_1` / `set_load 20.0`); RTL unchanged | 11/11 | **-1.32 ns (worse)** | **-39.26 ns (worse)** | +0.32 ns | 55926 / 43% (+0.8%) | 19208 (+661) |
+| (ii) RTL carry-select | `USE_CARRY_SELECT`-gated generate-based block carry-select adder in `fp_add_sub.sv` (new `CSA_BLOCK=4` param; add/sub unified via `b_eff = b_ext ^ {17{op}}`, `cin0 = op`); Flow v1/SDC unchanged | 11/11 | **-1.69 ns (worse)** | **-45.70 ns (worse)** | +0.32 ns | 54312 / 44% (**-1.2%, smaller**) | 18008 (**-539, fewer**) |
+
+**(ii) finding — negative result, and it confirms Step A's diagnosis more
+strongly than (i) did.** The carry-select RTL change made timing *worse*
+again (WNS -1.13ns → -1.69ns, TNS -33.69ns → -45.70ns) while *simultaneously
+making the design smaller* (-539 cells, -1.2% area). Inspected the fresh
+post-route worst path (`output/sta_postroute_checks.rpt`, regenerated after
+confirming netlist/report timestamps were monotonic — the first P&R attempt
+this experiment silently used a stale pre-edit `cordic_top_synth.v` and had
+to be discarded and rerun): the critical path is a **13-cell unbroken
+`maj3_1` chain with zero mux cells in it** — structurally indistinguishable
+from the original ripple-carry critical path. The block-carry-select mux
+structure written in RTL is present in the netlist (`mux2_1`/`mux2i_1`/
+`mux4_2` cells exist, 107 total) but the critical path routes around it
+entirely.
+
+Root cause: `abc -liberty ...` (still no `-D`/`-constr`, per Step A) is
+pure area-driven Boolean resynthesis. Sky130 HD's `maj3` cell makes a
+plain ripple-carry chain (`cout = maj3(a, b, cin)`) very close to the
+area-optimal implementation of *any* adder's Boolean function in this
+library, independent of how the RTL expresses the computation. ABC's
+resynthesis pass does not preserve source structure — it re-derives a
+minimal-area gate network for the function, converges back to essentially
+the same maj3-ripple shape regardless of whether the RTL described a plain
+adder or a carry-select one, and (having no delay awareness) has no reason
+to prefer the carry-select decomposition, which costs more logic for the
+same function unless something asks it to value delay over area. This is
+the same class of gap as (i) (ABC without `-D`/`-constr` cannot reflect
+delay), but it now generalizes: **RTL-level adder-topology changes alone
+cannot survive this synthesis flow's plain `abc -liberty` call** — the
+topology gets flattened back to whatever ABC finds smallest, which for
+this library is ripple-carry-shaped, before OpenROAD's placement ever sees
+it. Trying Brent-Kung or Kogge-Stone next would very likely reproduce this
+exact outcome for the exact same reason, since neither the diagnosis nor
+the offending tool call would differ.
+
+RTL reverted to the Flow v1 baseline (plain `+`/`-`, matching
+`BASELINE.md`) after recording this result, to keep the frozen baseline
+intact pending a decision on how to proceed. Regression: 11/11 (both with
+the carry-select RTL in place and after reverting it).
 
 **(i) finding — negative result.** Giving ABC a delay target and
 driving-cell/load constraint made things slightly *worse*, not better:
