@@ -274,17 +274,47 @@ including real wire RC) as the maj3 cells it was meant to bypass — so the
 total delay as the original 18-cell ripple, while adding real area (+12%,
 +2192 cells) for the extra select logic, most of it (`mux2i_1` × 349,
 `mux4_2` × 98, plus assorted AOI/OAI gates) not on the critical path at
-all. **Conclusion: forced-structure carry-select is also a negative
-result** — better than the plain (unforced) carry-select of (ii), but
-still worse than the Flow v1 ripple baseline on every axis (timing, area,
-cell count). All four synthesis/RTL-side approaches tried in Experiment 2
-now point to the same underlying limit: this design's bottleneck is real
-Sky130 wire RC and fanout load that only appears after placement, and no
-purely combinational adder-topology change — with or without forcing its
-structure to survive synthesis — changes how much of that load the
-critical net ends up carrying. RTL reverted to the Flow v1 baseline after
-recording this result (`fp_add_sub.sv` confirmed byte-identical to its
-pre-Experiment-2 state). Regression: 11/11 throughout.
+all. **Conclusion: forced-structure carry-select (2b-2) is also a negative
+result** (labeled explicitly as *forced structure*: the `(* keep_hierarchy
+*)` submodule is a synthesis-flow workaround, not a claim about how the
+RTL should normally be written) — better than the plain, unforced
+carry-select of (ii), but still worse than the Flow v1 ripple baseline on
+every axis (timing, area, cell count). RTL reverted to the Flow v1
+baseline after recording this result (`fp_add_sub.sv` confirmed
+byte-identical to its pre-Experiment-2 state). Regression: 11/11
+throughout.
+
+**Measured fact vs. hypothesis, stated separately, per explicit request:**
+- **Measured fact:** four synthesis/RTL-side approaches were tried
+  (synthesis-only timing-driven ABC in (i), plain RTL carry-select in
+  (ii), an ABC `-D` sweep in 2b-1, and forced-hierarchy carry-select in
+  2b-2) and all four measured worse than the Flow v1 ripple baseline on
+  WNS/TNS at 11.5ns.
+- **Measured fact, narrower:** in 2b-1, the synthesized netlist is
+  byte-for-byte structurally identical across `-D` = 800/3000/11500ps.
+  This specific result — ABC's output not changing at all with delay
+  target — is consistent with a **logic-depth explanation just as much as
+  a wire-RC explanation**: since ABC's own model has zero wire
+  capacitance on internal nets, "no sensitivity to -D" only proves ABC
+  cannot see whatever the real bottleneck is; it does not by itself
+  distinguish between "the bottleneck is wire RC" and "the bottleneck is
+  intrinsic logic depth that ABC's default (no-`-D`) area mapping already
+  minimizes about as well as its delay-aware mapping would."
+- **Hypothesis, not yet established:** the broader claim used above and
+  in earlier drafts of this section — "this design's bottleneck is real
+  Sky130 wire RC and fanout load that only appears after placement, and
+  no purely combinational adder-topology change fixes it" — is an
+  extrapolation from the four data points above, not a directly measured
+  fact. Only **carry-select** topologies were tried (plain and
+  forced-structure); **Brent-Kung and Kogge-Stone prefix adders remain
+  untested**, and it is not established that they would fail for the same
+  reason carry-select did (carry-select's specific failure mode in 2b-2
+  was select-mux overhead approximately equaling the delay it bypassed —
+  a prefix adder has a different area/delay tradeoff shape and could in
+  principle respond differently even under the same synthesis flow). This
+  hypothesis should not be treated as closing the door on RTL-level adder
+  changes in general, only on the two carry-select variants actually
+  measured.
 
 **2b-3: permanent staleness check.** The first Experiment 2(ii) P&R
 attempt silently used a stale pre-edit netlist (caught only by noticing

@@ -94,3 +94,19 @@ predicts, independently confirming the mechanism.
   chain.
 - (ii) RTL-level: replace the plain `+`/`-` with an explicit
   carry-select/prefix structure in `fp_add_sub.sv`, independent of (i).
+
+**Update after Experiment 2/2b (measured fact vs. hypothesis, stated
+separately per explicit request):** both levers above were tried, plus an
+ABC `-D` sensitivity sweep and a forced-hierarchy variant of (ii) — see
+RESULTS.md Experiment 2 / 2b for full numbers. All four measured worse
+than the ripple baseline at 11.5ns. **Measured fact:** the synthesized
+netlist is byte-identical across `-D` = 800/3000/11500ps, so ABC's mapping
+here is provably insensitive to delay target. **Hypothesis, not
+established:** that this generalizes to "no adder topology can fix this
+under this flow" — only carry-select (plain and forced-structure) was
+tried; Brent-Kung/Kogge-Stone remain untested, and the `-D`-insensitivity
+result is equally consistent with an intrinsic-logic-depth explanation as
+a wire-RC one (ABC's model has zero internal-net wire capacitance either
+way, so its indifference to `-D` doesn't distinguish the two). Do not cite
+the wire-RC/fanout explanation as a settled fact without re-reading
+RESULTS.md's Experiment 2b writeup for the caveat.

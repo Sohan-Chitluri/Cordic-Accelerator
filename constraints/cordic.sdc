@@ -6,14 +6,15 @@
 # -----------------------------------------------------------------------------
 # CLOCK DEFINITION
 # -----------------------------------------------------------------------------
-# Period 11.5ns (~87 MHz) is kept as the frozen point-of-record clock (see
-# BASELINE.md) but is now KNOWN NOT TO CLOSE under Flow v1: real post-route
-# STA (real extracted SPEF, standalone OpenSTA) measures WNS -1.13ns,
-# TNS -33.69ns at this period. The clock sweep in RESULTS.md found 13.0ns
-# is the honest closing point (worst slack +0.09ns). The margin claim that
-# used to be here predates RTL merged after commit dfa2b01 and was never
-# accurate for the current design — see DECISIONS.md.
-create_clock -name clk -period 11.500 [get_ports clk]
+# FROZEN at 15.0ns (~66.7 MHz) per BASELINE.md. 11.5ns does not close under
+# Flow v1 (WNS -1.13ns measured, real post-route STA). Experiment 2/2b tried
+# four synthesis/RTL-side approaches to close 11.5ns (synthesis-only
+# timing-driven ABC, plain RTL carry-select, an ABC -D sweep, and a
+# forced-hierarchy carry-select) — all measured worse than the plain
+# ripple-carry baseline; see RESULTS.md. 13.0ns closes with ~0 margin
+# (worst slack +0.09ns); 15.0ns was chosen instead for a real margin
+# (+2.00ns measured). See BASELINE.md for the full freeze record.
+create_clock -name clk -period 15.000 [get_ports clk]
 set_clock_uncertainty -setup 0.500 [get_clocks clk]
 set_clock_uncertainty -hold 0.100 [get_clocks clk]
 
