@@ -51,3 +51,46 @@ baseline going forward ("Flow v0"). The 11.5 ns clock value in
 `constraints/cordic.sdc` and its justifying comment are now known-stale
 and will be revisited once Flow v1 is frozen and the clock sweep (Step 2)
 is re-run.
+
+---
+
+## Experiment 2, Step A: is the ripple-carry chain RTL structure or synthesis mapping?
+
+**Answer: synthesis mapping, not RTL structure.** Two independent, verified facts:
+
+1. **`rtl/fp_add_sub.sv` has no adder architecture at all.** Its module doc
+   comment claims "carry-select optimization" and it declares a
+   `USE_CARRY_SELECT` parameter (default `1'b1`), but `USE_CARRY_SELECT` is
+   never referenced anywhere in the module body (confirmed by grepping the
+   whole `rtl/` tree — the only two hits are the declaration and the doc
+   comment). The actual datapath is plain `a_ext - b_ext` / `a_ext + b_ext`
+   on `logic signed` operands (lines 51–55) — i.e. whatever Yosys's generic
+   `+`/`-` lowering produces, with zero RTL-level structural choice.
+
+2. **`scripts/synth.tcl` lowers `$add`/`$sub` with plain `techmap` (line
+   32) before `abc` ever runs** (line 38: `abc -liberty ...`, no `-D`, no
+   `-constr`). Yosys's default `techmap.v` rule for `$add` builds a
+   textbook ripple-carry structure (cascaded full-adders); there is no
+   arithmetic-aware pass (`alumacc`, or a custom lookahead/carry-select
+   techmap map file) anywhere in the script. ABC then only re-maps that
+   already-ripple-structured gate network to Sky130 cells — maj3 is
+   exactly a full adder's carry-generate function, which is why the
+   critical path is a chain of `sky130_fd_sc_hd__maj3_1` cells.
+
+**Corroborating evidence that ABC is not timing-driven at all:** per
+`yosys -p "help abc"`, the default ABC script only runs `buffer; upsize
+{D}; dnsize {D}` (the cell-sizing passes) when **both** `-D <ps>` and
+`-constr <file>` are given; `scripts/synth.tcl` passes neither. Checked
+`output/synth_area.rpt`: **every** carry-chain cell in the entire
+5367-cell design (`maj3_1`, `xor3_1`, `xnor2_1`, `xnor3_1`, `xor2_1`) is
+the weakest (`_1`) drive-strength variant, even though the Sky130 HD
+library stocks `_2` and `_4` variants of every one of them. Zero upsized
+cells anywhere in the design is exactly what "ABC never runs sizing"
+predicts, independently confirming the mechanism.
+
+**Two independent levers follow directly:**
+- (i) synthesis-only, RTL unchanged: give `abc` a `-D` delay target and a
+  `-constr` file so it actually sizes/buffers along the existing ripple
+  chain.
+- (ii) RTL-level: replace the plain `+`/`-` with an explicit
+  carry-select/prefix structure in `fp_add_sub.sv`, independent of (i).
