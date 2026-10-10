@@ -113,16 +113,23 @@ An output mux places a 2:1 data selector in series after the adder carry chain,
 directly threatening the tight +0.60ns slack margin at ITERATIONS=11.
 In contrast, operand isolation inserts simple AND gates at the *inputs* of the
 shifted path and constant ROM, which settle early in parallel with stage input arrival.
-The adder itself computes the passthrough value, adding **zero series gate delay**
-to the output stage-register arrival path.
+The adder itself computes the passthrough value (hypothesis, to be measured post-route
+on the output stage-register arrival path).
 
 **Feasibility Acceptance Gate (from Task 1 post-route power audit):**
 B1 gating is considered viable if the savable combinational power fraction at
-mode 4 is above 15% of total power. Measured post-route Sky130 HD gate-level
-activity (Task 1) demonstrates:
-- Fixed-11 total power: 11.42 mW; combinational power: 4.06 mW (35.6% of total).
-- Savable power upper bound at mode 4: $4.06\text{ mW} \times (11 - 4)/11 = 2.58\text{ mW}$ (22.6% of total power).
-- Since 22.6% > 15%, the feasibility gate **passes**.
+mode 4 is above 15% of total power. Corrected post-route Sky130 HD gate-level
+power audit (Task 1 / Prompt A) on the canonical stimulus set ($V_{\text{full}}$,
+920 vectors, SHA256: `1aa97f6dfa28129ab5f46442b82e51338d77fb6e8b0995dfc91b13e26856ea76`)
+demonstrates:
+- Fixed-11 total power: 21.10 mW; combinational power: 13.20 mW (62.7% of total power).
+- Fixed-4 total power: 8.63 mW; combinational power: 5.53 mW (64.1% of total power).
+- Combinational savings bound $\Delta P_{\text{comb}}(11 \to 4) = 13.20\text{ mW} - 5.53\text{ mW} = 7.67\text{ mW}$ (58.11% of Fixed-11 combinational power; 36.35% of Fixed-11 total power).
+- Combinational savings bound $\Delta P_{\text{comb}}(11 \to 8) = 13.20\text{ mW} - 10.80\text{ mW} = 2.40\text{ mW}$ (18.18% of Fixed-11 combinational power; 11.37% of Fixed-11 total power).
+- Per-stage hierarchical decomposition of Fixed-11: Stages 0..10 account for 16.24 mW (8.55 mW adders, 4.50 mW shifters, 3.19 mW registers). Theoretical upper bound on mode-4 gated power (Stages 4..10 combinational) is 7.79 mW (36.9% of total power; 199.7 pJ/tx vs 316.5 pJ/tx baseline).
+- Theoretical upper bound on mode-8 gated power (Stages 8..10 combinational) is 3.30 mW (15.6% of total power; 267.0 pJ/tx vs 316.5 pJ/tx baseline).
+- Note: These bounds exclude isolation cell overhead and residual datapath toggling. Gating operates unconditionally on clock cycles; registers and clock tree (2.56 mW) continue toggling.
+- Since the savable combinational power fraction (36.4% total, 58.1% comb) exceeds 15%, the feasibility threshold is satisfied.
 
 ## 3. B2 — early exit (discussion only — non-baseline architecture)
 
@@ -266,7 +273,7 @@ are the ground truth to compare against once a real adaptive design exists:
 | Latency (cycles) | 12 cycles | 5 / 9 / 12 (mode-matched, ITERATIONS+1) | B1: fixed 12 cycles for every mode. B2: 5/9/12 per mode |
 | Throughput (single-mode) | 1/cycle after fill | 1/cycle after fill, per fixed design | B1: 1/cycle after fill, any single mode. B2: 1/cycle after fill, single mode |
 | Throughput (mixed-mode) | N/A (single mode only) | N/A (fixed designs don't mix modes) | B1: 1/cycle sustained (no contention). B2: degraded by arbiter contention |
-| Power (Mode 4 / 8 / 11) | 11.42 mW (flat across all workloads) | 4.73 / 8.88 / 11.42 mW (measured gate-level) | B1: Mode 11 ≈ 11.42 mW; Mode 4 target ≤ 8.84 mW (saving up to 2.58 mW combinational) |
+| Power (Mode 4 / 8 / 11) | 21.10 mW (flat across all workloads) | 8.63 / 17.00 / 21.10 mW (measured post-route GL) | B1: Mode 11 ≈ 21.10 mW; Mode 4 bound ≤ 13.31 mW (saving up to 7.79 mW / 36.9%); Mode 8 bound ≤ 17.80 mW (saving up to 3.30 mW / 15.6%) |
 | Formal Equivalence | Self | Golden float/fixed model | **Bit-identical equivalence:** Adaptive-11 operating in mode $n$ must produce outputs bit-identical to Fixed-$n$ for all $n \in [1, 11]$ under identical test vectors |
 
 **The headline question this comparison plan answers**: is the area+
