@@ -110,3 +110,65 @@ a wire-RC one (ABC's model has zero internal-net wire capacitance either
 way, so its indifference to `-D` doesn't distinguish the two). Do not cite
 the wire-RC/fanout explanation as a settled fact without re-reading
 RESULTS.md's Experiment 2b writeup for the caveat.
+
+## Phase 1 architecture hazards (unresolved, spec-only — see `ARCH_SPEC.md`)
+
+Recorded while writing `ARCH_SPEC.md` for the adaptive 11-stage,
+4/8/11-mode design. None of these are implemented or resolved; each has
+an interim mitigation chosen for the spec, open for revision once real
+measurements exist.
+
+### Hazard: mode-set choice (RMS-based vs. max-error-based)
+
+Phase 0c (`PROGRESS.md` §1b) found that applying the same three
+round-number error targets (0.10/0.01/0.001) to max error instead of RMS
+error changes the Low/Mid picks (4→6, 8→9) and makes the High target
+(0.001) unachievable under either reading at any tested iteration count.
+Two internally-consistent mode sets exist from the same data: RMS-based
+(4, 8, 11) and max-error-based (6, 9, —/undefined High).
+
+**Resolution (in `ARCH_SPEC.md` revision):** RESOLVED. Revived `cfg_iterations`
+as a native 4-bit configuration field supporting arbitrary iteration counts
+`1..11`. This allows the accelerator to run either the RMS set (4/8/11) or the
+max-error set (6/9) without re-synthesizing different designs.
+
+### Hazard: config-admission handshake has no "reject" path
+
+`cordic_pipeline.sv`'s `config_valid`/`config_ready` handshake has
+`config_ready` asserted unconditionally once out of reset (see line ~81
+area) — there is no existing mechanism to refuse an incoming config
+value. Phase 1 needs to guard unsupported `cfg_iterations` values.
+
+**Resolution (in `ARCH_SPEC.md` revision):** RESOLVED. Runtime mode inputs
+are guarded without rejecting: `cfg_iterations == 0` clamps to 1;
+`cfg_iterations > 11` clamps to 11 (full precision) and asserts a sticky
+status flag `status_mode_clamped_sticky`. No admission-reject signal or
+pipeline stall is required.
+
+### Hazard: B2 per-tap FIFO backpressure semantics
+
+B2's three independent-depth completion taps (§3 of `ARCH_SPEC.md`) each
+need their own admission/backpressure accounting, but the existing
+pipeline has exactly one combined `ready_out` derived from one
+`reserved_count` credit counter against one `FIFO_DEPTH`. Two candidate
+designs exist — per-tap credit tracking feeding a single combined
+`ready_out` (conservative: blocks admission of ANY mode if ANY one tap's
+queue is full), or per-mode `ready_out` semantics (a mode-4 transaction
+can be admitted even while the mode-11 tap queue is full) — with
+different complexity and different behavior under skewed mixed-mode
+traffic.
+
+**Mitigation (interim, not implemented):** `ARCH_SPEC.md` does not choose
+between these; B2 is kept strictly as a non-baseline discussion item.
+
+### Hazard: B1 mux and B2 arbiter are unmeasured timing risks
+
+Both B1's per-stage output mux and B2's cross-tap output arbiter were
+flagged in earlier `ARCH_SPEC.md` drafts as predicted risks against
+the already-tight +0.60ns worst-slack margin measured at ITERATIONS=11.
+
+**Resolution (in `ARCH_SPEC.md` revision):** B1 timing risk is RESOLVED at the
+architecture level by replacing the series output multiplexer with **input operand
+isolation** (AND gating shifted operands, constant ROM, and cin at the adder inputs).
+This adds zero series delay to the stage adder carry chain. B2 arbiter remains an
+unresolved risk, but B2 is non-baseline.
