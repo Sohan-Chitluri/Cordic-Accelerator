@@ -80,3 +80,23 @@ Three distinct test vector set sizes appear across project documentation and log
 - **Where Used:**
   - **Phase 0, Phase 0b, and Phase 0c Numerical Sweeps:** Used to benchmark algorithm error (max absolute error and RMS error) against **exact double-precision floating-point rotation** (`math.sin` / `math.cos`).
   - By evaluating in real floating-point units before quantization, this pool isolated algorithmic iteration truncation and gain ($K$) errors from fixed-point container clamping effects, establishing the mode thresholds (0.10, 0.01, 0.003, 0.001) and identifying the 12-bit quantization floor (~0.0013).
+
+---
+
+## 3. Synthetic Workload Traces (Phase 1 Workload Evaluation)
+
+Defined in `wt-workload` prior to viewing gate-level power simulation data. Pure golden-model evaluations (no RTL edits, no flow runs).
+
+### Workload Inventory & Cryptographic Hashes
+
+| Workload Identifier | Target Application | Precision Class | Transactions | Fixed PRNG Seed | Trace File | SHA256 Checksum | Size (Bytes) |
+|---|---|---|---|---|---|---|---|
+| **`WL_FFT`** | FFT Butterfly Twiddle Rotation (N=256) | Precision-Tolerant (RMS ≤ 0.010) | 64 | `0xB17E` (45438) | `vectors/wl_fft_trace.raw` | `f399dabc9bfd1cba96868c988a727fd72430fb3d2eaa078c03d1b2c35805b1b7` | 1,776 |
+| **`WL_NCO`** | NCO Continuous Phasor Stream (N=512) | Strict (Max error ≤ 0.003) | 512 | `0xB17E` (45438) | `vectors/wl_nco_trace.raw` | `068d2d63c76bcd78219c9761fa5f815fb6480145bbbe92edee0716d816a4f752` | 13,426 |
+
+### Associated Analysis and Histogram Artifacts
+- **`vectors/WORKLOAD_ANALYSIS.md`**: Theoretical justifications, error tables ($n=3..13$), mode selection policies (assumptions), and adaptation benefit analysis.
+- **`vectors/wl_fft_hist.csv`**: Mode occupancy histogram for `WL_FFT` ($n=3: 1.6\%$, $n=6: 23.4\%$, $n=8: 75.0\%$). SHA256: `295033f287765c9ab602d46cb693b91473df12bebe097efbf60b49911bbed9e6`.
+- **`vectors/wl_nco_hist.csv`**: Mode occupancy histogram for `WL_NCO` ($n=3: 0.2\%$, $n=11: 99.8\%$). SHA256: `8ecfa1858a174b608d4a6db6d6131fa73ffe56c199b5b0b5533d27e1940dc128`.
+- **`vectors/gen_workload_traces.py`**: Deterministic standalone generator using Phase 0 `GeneralizedCordicModel`.
+
