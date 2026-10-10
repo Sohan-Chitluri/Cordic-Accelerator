@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" font-family="sans-serif" font-size="11">
+<rect width="640" height="400" fill="white"/>
+<text x="320.0" y="20" text-anchor="middle" font-size="14">K-factor error contribution vs. iteration count, 1-16</text>
+<line x1="60" y1="340" x2="580" y2="340" stroke="black"/>
+<line x1="60" y1="60" x2="60" y2="340" stroke="black"/>
+<text x="320.0" y="385" text-anchor="middle">iterations</text>
+<text x="15" y="200.0" text-anchor="middle" transform="rotate(-90,15,200.0)">abs error (real units) (log10)</text>
+<path d="M60.0,61.3 L94.7,86.8 L129.3,112.0 L164.0,137.6 L198.7,166.4 L233.3,190.4 L268.0,219.2 L302.7,245.8 L337.3,271.3 L372.0,295.9 L406.7,317.2 L441.3,329.3 L476.0,333.2 L510.7,333.5 L545.3,333.5 L580.0,333.5" fill="none" stroke="#1f77b4" stroke-width="2"/>
+<circle cx="60.0" cy="61.3" r="2.5" fill="#1f77b4"/>
+<circle cx="94.7" cy="86.8" r="2.5" fill="#1f77b4"/>
+<circle cx="129.3" cy="112.0" r="2.5" fill="#1f77b4"/>
+<circle cx="164.0" cy="137.6" r="2.5" fill="#1f77b4"/>
+<circle cx="198.7" cy="166.4" r="2.5" fill="#1f77b4"/>
+<circle cx="233.3" cy="190.4" r="2.5" fill="#1f77b4"/>
+<circle cx="268.0" cy="219.2" r="2.5" fill="#1f77b4"/>
+<circle cx="302.7" cy="245.8" r="2.5" fill="#1f77b4"/>
+<circle cx="337.3" cy="271.3" r="2.5" fill="#1f77b4"/>
+<circle cx="372.0" cy="295.9" r="2.5" fill="#1f77b4"/>
+<circle cx="406.7" cy="317.2" r="2.5" fill="#1f77b4"/>
+<circle cx="441.3" cy="329.3" r="2.5" fill="#1f77b4"/>
+<circle cx="476.0" cy="333.2" r="2.5" fill="#1f77b4"/>
+<circle cx="510.7" cy="333.5" r="2.5" fill="#1f77b4"/>
+<circle cx="545.3" cy="333.5" r="2.5" fill="#1f77b4"/>
+<circle cx="580.0" cy="333.5" r="2.5" fill="#1f77b4"/>
+<text x="575" y="60" text-anchor="end" fill="#1f77b4">RMS err, RTL's fixed K</text>
+<path d="M60.0,60.0 L94.7,86.5 L129.3,112.0 L164.0,137.5 L198.7,166.4 L233.3,190.4 L268.0,219.2 L302.7,245.8 L337.3,271.7 L372.0,297.4 L406.7,320.1 L441.3,334.2 L476.0,339.4 L510.7,340.0 L545.3,340.0 L580.0,340.0" fill="none" stroke="#d62728" stroke-width="2"/>
+<circle cx="60.0" cy="60.0" r="2.5" fill="#d62728"/>
+<circle cx="94.7" cy="86.5" r="2.5" fill="#d62728"/>
+<circle cx="129.3" cy="112.0" r="2.5" fill="#d62728"/>
+<circle cx="164.0" cy="137.5" r="2.5" fill="#d62728"/>
+<circle cx="198.7" cy="166.4" r="2.5" fill="#d62728"/>
+<circle cx="233.3" cy="190.4" r="2.5" fill="#d62728"/>
+<circle cx="268.0" cy="219.2" r="2.5" fill="#d62728"/>
+<circle cx="302.7" cy="245.8" r="2.5" fill="#d62728"/>
+<circle cx="337.3" cy="271.7" r="2.5" fill="#d62728"/>
+<circle cx="372.0" cy="297.4" r="2.5" fill="#d62728"/>
+<circle cx="406.7" cy="320.1" r="2.5" fill="#d62728"/>
+<circle cx="441.3" cy="334.2" r="2.5" fill="#d62728"/>
+<circle cx="476.0" cy="339.4" r="2.5" fill="#d62728"/>
+<circle cx="510.7" cy="340.0" r="2.5" fill="#d62728"/>
+<circle cx="545.3" cy="340.0" r="2.5" fill="#d62728"/>
+<circle cx="580.0" cy="340.0" r="2.5" fill="#d62728"/>
+<text x="575" y="75" text-anchor="end" fill="#d62728">RMS err, hypothetical correct-per-n K</text>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" font-family="sans-serif" font-size="11">
+<rect width="640" height="400" fill="white"/>
+<text x="320.0" y="20" text-anchor="middle" font-size="14">K-factor error contribution vs. iteration count</text>
+<line x1="60" y1="340" x2="580" y2="340" stroke="black"/>
+<line x1="60" y1="60" x2="60" y2="340" stroke="black"/>
+<text x="320.0" y="385" text-anchor="middle">iterations</text>
+<text x="15" y="200.0" text-anchor="middle" transform="rotate(-90,15,200.0)">abs error (real units) (log10)</text>
+<path d="M60.0,61.9 L134.3,100.4 L208.6,138.4 L282.9,176.9 L357.1,220.4 L431.4,256.5 L505.7,300.0 L580.0,340.0" fill="none" stroke="#1f77b4" stroke-width="2"/>
+<circle cx="60.0" cy="61.9" r="2.5" fill="#1f77b4"/>
+<circle cx="134.3" cy="100.4" r="2.5" fill="#1f77b4"/>
+<circle cx="208.6" cy="138.4" r="2.5" fill="#1f77b4"/>
+<circle cx="282.9" cy="176.9" r="2.5" fill="#1f77b4"/>
+<circle cx="357.1" cy="220.4" r="2.5" fill="#1f77b4"/>
+<circle cx="431.4" cy="256.5" r="2.5" fill="#1f77b4"/>
+<circle cx="505.7" cy="300.0" r="2.5" fill="#1f77b4"/>
+<circle cx="580.0" cy="340.0" r="2.5" fill="#1f77b4"/>
+<text x="575" y="60" text-anchor="end" fill="#1f77b4">RMS err, wrong K (RTL-realistic)</text>
+<path d="M60.0,60.0 L134.3,99.9 L208.6,138.3 L282.9,176.9 L357.1,220.4 L431.4,256.5 L505.7,299.9 L580.0,340.0" fill="none" stroke="#d62728" stroke-width="2"/>
+<circle cx="60.0" cy="60.0" r="2.5" fill="#d62728"/>
+<circle cx="134.3" cy="99.9" r="2.5" fill="#d62728"/>
+<circle cx="208.6" cy="138.3" r="2.5" fill="#d62728"/>
+<circle cx="282.9" cy="176.9" r="2.5" fill="#d62728"/>
+<circle cx="357.1" cy="220.4" r="2.5" fill="#d62728"/>
+<circle cx="431.4" cy="256.5" r="2.5" fill="#d62728"/>
+<circle cx="505.7" cy="299.9" r="2.5" fill="#d62728"/>
+<circle cx="580.0" cy="340.0" r="2.5" fill="#d62728"/>
+<text x="575" y="75" text-anchor="end" fill="#d62728">RMS err, correct-per-n K (hypothetical)</text>
+</svg>

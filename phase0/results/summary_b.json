@@ -1,0 +1,2751 @@
+{
+  "n_directed": 110,
+  "n_random": 500,
+  "n_edge": 40,
+  "iterations_sweep_16": [
+    {
+      "n": 610,
+      "max": 1.5275890013434195,
+      "rms": 0.5729509719080116,
+      "mean": 0.47826478445787,
+      "iterations": 1,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 17.59510151324174,
+      "edge_rms": 10.506650031078482
+    },
+    {
+      "n": 610,
+      "max": 0.7982003286392294,
+      "rms": 0.29949919738167535,
+      "mean": 0.24226515027488998,
+      "iterations": 2,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 18.136548585921574,
+      "edge_rms": 10.367957708921647
+    },
+    {
+      "n": 610,
+      "max": 0.45067424123571787,
+      "rms": 0.15771608003763402,
+      "mean": 0.12408285149440791,
+      "iterations": 3,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 18.544936499096217,
+      "edge_rms": 10.290413820394773
+    },
+    {
+      "n": 610,
+      "max": 0.21629279128246012,
+      "rms": 0.08247987525024328,
+      "mean": 0.06658715063833265,
+      "iterations": 4,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 18.603973855610363,
+      "edge_rms": 10.288691190917463
+    },
+    {
+      "n": 610,
+      "max": 0.11137378353224522,
+      "rms": 0.03962424672627464,
+      "mean": 0.03035595176686301,
+      "iterations": 5,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 18.62328277094069,
+      "edge_rms": 10.28652504895397
+    },
+    {
+      "n": 610,
+      "max": 0.05644510012720239,
+      "rms": 0.021550112994058578,
+      "mean": 0.017376099382227818,
+      "iterations": 6,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 18.6268405070115,
+      "edge_rms": 10.287146564558423
+    },
+    {
+      "n": 610,
+      "max": 0.027981238985011127,
+      "rms": 0.010359404788986183,
+      "mean": 0.008235523770315683,
+      "iterations": 7,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.043076923076923075,
+      "edge_max": 18.627683016080894,
+      "edge_rms": 10.891234287057618
+    },
+    {
+      "n": 610,
+      "max": 0.013815076981639494,
+      "rms": 0.00528032029337336,
+      "mean": 0.0042210829778927365,
+      "iterations": 8,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628114168032504,
+      "edge_rms": 11.463907337445766
+    },
+    {
+      "n": 610,
+      "max": 0.008617688493773248,
+      "rms": 0.002758933224371759,
+      "mean": 0.002180408542185364,
+      "iterations": 9,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628265564554734,
+      "edge_rms": 11.463932212831516
+    },
+    {
+      "n": 610,
+      "max": 0.0046628143885555275,
+      "rms": 0.001478997065183342,
+      "mean": 0.0012126933046832942,
+      "iterations": 10,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628191533679402,
+      "edge_rms": 11.463933561460795
+    },
+    {
+      "n": 610,
+      "max": 0.0027683174288783198,
+      "rms": 0.0008609198219504573,
+      "mean": 0.0007290182609160642,
+      "iterations": 11,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628189585061335,
+      "edge_rms": 11.463966185235838
+    },
+    {
+      "n": 610,
+      "max": 0.0017786788600817633,
+      "rms": 0.0006322694201421182,
+      "mean": 0.0005473118294042416,
+      "iterations": 12,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628245146085636,
+      "edge_rms": 11.463981028685545
+    },
+    {
+      "n": 610,
+      "max": 0.0013108402233701437,
+      "rms": 0.0005726183572484293,
+      "mean": 0.0005009601678337651,
+      "iterations": 13,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628215091137204,
+      "edge_rms": 11.463979809218225
+    },
+    {
+      "n": 610,
+      "max": 0.001557723297984563,
+      "rms": 0.0005693618011764854,
+      "mean": 0.0004993417087360568,
+      "iterations": 14,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628233104913917,
+      "edge_rms": 11.46397834428295
+    },
+    {
+      "n": 610,
+      "max": 0.001557723297984563,
+      "rms": 0.0005693618011764854,
+      "mean": 0.0004993417087360568,
+      "iterations": 15,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628239122301057,
+      "edge_rms": 11.46398726976135
+    },
+    {
+      "n": 610,
+      "max": 0.001557723297984563,
+      "rms": 0.0005693618011764854,
+      "mean": 0.0004993417087360568,
+      "iterations": 16,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628245146085636,
+      "edge_rms": 11.463994113295438
+    }
+  ],
+  "joint_masked": [
+    {
+      "n": 610,
+      "max": 1.5275890013434195,
+      "rms": 0.5729509719080116,
+      "mean": 0.47826478445787,
+      "iterations": 1,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.7982003286392294,
+      "rms": 0.29949919738167535,
+      "mean": 0.24226515027488998,
+      "iterations": 2,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.45067424123571787,
+      "rms": 0.15771608003763402,
+      "mean": 0.12408285149440791,
+      "iterations": 3,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.21629279128246012,
+      "rms": 0.08247987525024328,
+      "mean": 0.06658715063833265,
+      "iterations": 4,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.11137378353224522,
+      "rms": 0.03962424672627464,
+      "mean": 0.03035595176686301,
+      "iterations": 5,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.05644510012720239,
+      "rms": 0.021550112994058578,
+      "mean": 0.017376099382227818,
+      "iterations": 6,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.027981238985011127,
+      "rms": 0.010359404788986183,
+      "mean": 0.008235523770315683,
+      "iterations": 7,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.013815076981639494,
+      "rms": 0.00528032029337336,
+      "mean": 0.0042210829778927365,
+      "iterations": 8,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.008617688493773248,
+      "rms": 0.002758933224371759,
+      "mean": 0.002180408542185364,
+      "iterations": 9,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.0046628143885555275,
+      "rms": 0.001478997065183342,
+      "mean": 0.0012126933046832942,
+      "iterations": 10,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.0027683174288783198,
+      "rms": 0.0008609198219504573,
+      "mean": 0.0007290182609160642,
+      "iterations": 11,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.0017786788600817633,
+      "rms": 0.0006322694201421182,
+      "mean": 0.0005473118294042416,
+      "iterations": 12,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.0013108402233701437,
+      "rms": 0.0005726183572484293,
+      "mean": 0.0005009601678337651,
+      "iterations": 13,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.001557723297984563,
+      "rms": 0.0005693618011764854,
+      "mean": 0.0004993417087360568,
+      "iterations": 14,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.001557723297984563,
+      "rms": 0.0005693618011764854,
+      "mean": 0.0004993417087360568,
+      "iterations": 15,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 0.001557723297984563,
+      "rms": 0.0005693618011764854,
+      "mean": 0.0004993417087360568,
+      "iterations": 16,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    },
+    {
+      "n": 610,
+      "max": 1.5274293399619743,
+      "rms": 0.5729475582286059,
+      "mean": 0.4782592587031551,
+      "iterations": 1,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.7984184864849334,
+      "rms": 0.29951230464639816,
+      "mean": 0.24226652805846746,
+      "iterations": 2,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.45133300232775736,
+      "rms": 0.1577567856624321,
+      "mean": 0.12409798760048844,
+      "iterations": 3,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.21707460109635898,
+      "rms": 0.08253105000679,
+      "mean": 0.06662902530489015,
+      "iterations": 4,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.11173897312721219,
+      "rms": 0.03967396680419684,
+      "mean": 0.030426618314714007,
+      "iterations": 5,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.05735701391482501,
+      "rms": 0.02157610450192226,
+      "mean": 0.017402715096746763,
+      "iterations": 6,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.04,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.028677275581608944,
+      "rms": 0.010532382927701015,
+      "mean": 0.008415198645191194,
+      "iterations": 7,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.017954280599579035,
+      "rms": 0.005646087062341517,
+      "mean": 0.004595439021564684,
+      "iterations": 8,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.010919799900566246,
+      "rms": 0.003416206708214213,
+      "mean": 0.0028317795864298374,
+      "iterations": 9,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.00740798536838752,
+      "rms": 0.0026203196742096277,
+      "mean": 0.0023090617671333146,
+      "iterations": 10,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.005656384046201514,
+      "rms": 0.002369647320214708,
+      "mean": 0.0021402464300106475,
+      "iterations": 11,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.006202269254257938,
+      "rms": 0.002450394915824831,
+      "mean": 0.0022404649539011405,
+      "iterations": 12,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.005797050187074168,
+      "rms": 0.0025989995306334034,
+      "mean": 0.002380364822227776,
+      "iterations": 13,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0062474772541320465,
+      "rms": 0.002748416343228631,
+      "mean": 0.0024921974608845448,
+      "iterations": 14,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0062474772541320465,
+      "rms": 0.002748416343228631,
+      "mean": 0.0024921974608845448,
+      "iterations": 15,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0062474772541320465,
+      "rms": 0.002748416343228631,
+      "mean": 0.0024921974608845448,
+      "iterations": 16,
+      "mask_bits": 1,
+      "effective_bits": 11,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.525885482010419,
+      "rms": 0.5729396782286839,
+      "mean": 0.4782684063163133,
+      "iterations": 1,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.7995112833929616,
+      "rms": 0.29947714298057565,
+      "mean": 0.24224893363619876,
+      "iterations": 2,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.4518512726322763,
+      "rms": 0.15780696490973337,
+      "mean": 0.12411193995594691,
+      "iterations": 3,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.21803556237068789,
+      "rms": 0.08267071312033332,
+      "mean": 0.0667713015721919,
+      "iterations": 4,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.11212423887965665,
+      "rms": 0.039845304750229786,
+      "mean": 0.03080925658730099,
+      "iterations": 5,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.061352577583203546,
+      "rms": 0.02175407503332574,
+      "mean": 0.01763965729185648,
+      "iterations": 6,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.04,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.03330380257674643,
+      "rms": 0.011334754333241694,
+      "mean": 0.00934078107354027,
+      "iterations": 7,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.04,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.021473392167477186,
+      "rms": 0.0072684513672332356,
+      "mean": 0.006277303874868897,
+      "iterations": 8,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.01443611252190603,
+      "rms": 0.005934356641474764,
+      "mean": 0.005377813540389271,
+      "iterations": 9,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.013651299201331553,
+      "rms": 0.005961872900287035,
+      "mean": 0.0055257247050875345,
+      "iterations": 10,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.012790100804540832,
+      "rms": 0.006332811234483541,
+      "mean": 0.005920375034213159,
+      "iterations": 11,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.013374793691022109,
+      "rms": 0.0067963955965605095,
+      "mean": 0.006376795181352219,
+      "iterations": 12,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.014741370016450948,
+      "rms": 0.007340094799459243,
+      "mean": 0.006830191083644841,
+      "iterations": 13,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.015531535632615156,
+      "rms": 0.0076331928851212875,
+      "mean": 0.007052526998249062,
+      "iterations": 14,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.015531535632615156,
+      "rms": 0.0076331928851212875,
+      "mean": 0.007052526998249062,
+      "iterations": 15,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.015531535632615156,
+      "rms": 0.0076331928851212875,
+      "mean": 0.007052526998249062,
+      "iterations": 16,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.5252474297469703,
+      "rms": 0.572907904515109,
+      "mean": 0.4782772046038019,
+      "iterations": 1,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.8016949408489397,
+      "rms": 0.2995159903695129,
+      "mean": 0.24233491131405743,
+      "iterations": 2,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.4514258761027975,
+      "rms": 0.15791576173392138,
+      "mean": 0.12420261894786713,
+      "iterations": 3,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.22004344492761857,
+      "rms": 0.0829222496660369,
+      "mean": 0.06712570499671258,
+      "iterations": 4,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.11289982645865441,
+      "rms": 0.04042396875138526,
+      "mean": 0.031852536750101496,
+      "iterations": 5,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.07670558385307193,
+      "rms": 0.02284048959550061,
+      "mean": 0.01894002236714056,
+      "iterations": 6,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.04,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.048667989379016216,
+      "rms": 0.014001282108504338,
+      "mean": 0.01218827554509156,
+      "iterations": 7,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.034728651883009054,
+      "rms": 0.012008568076474494,
+      "mean": 0.010919151067627978,
+      "iterations": 8,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.027813764410417368,
+      "rms": 0.012022669628742705,
+      "mean": 0.011180971219763428,
+      "iterations": 9,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.025183719483312914,
+      "rms": 0.012934924722247729,
+      "mean": 0.012147557557834438,
+      "iterations": 10,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.025183719483312914,
+      "rms": 0.013980299293619873,
+      "mean": 0.013211415000998103,
+      "iterations": 11,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.027920345408253427,
+      "rms": 0.015316657718584816,
+      "mean": 0.014377748713220569,
+      "iterations": 12,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.03066154656048292,
+      "rms": 0.016417319303673624,
+      "mean": 0.015287946128699024,
+      "iterations": 13,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0333374761122003,
+      "rms": 0.017004855468890447,
+      "mean": 0.015737182777948795,
+      "iterations": 14,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0333374761122003,
+      "rms": 0.017004855468890447,
+      "mean": 0.015737182777948795,
+      "iterations": 15,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0333374761122003,
+      "rms": 0.017004855468890447,
+      "mean": 0.015737182777948795,
+      "iterations": 16,
+      "mask_bits": 3,
+      "effective_bits": 9,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.5202513142644687,
+      "rms": 0.5728113615953164,
+      "mean": 0.47828911810381763,
+      "iterations": 1,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.8086817621574431,
+      "rms": 0.29949745864716576,
+      "mean": 0.24247178722575938,
+      "iterations": 2,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.45019811759899386,
+      "rms": 0.15820754006974747,
+      "mean": 0.12450922351182074,
+      "iterations": 3,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.22376034901159444,
+      "rms": 0.08396633016757428,
+      "mean": 0.06834578836092653,
+      "iterations": 4,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.12184494602220912,
+      "rms": 0.04268486427285314,
+      "mean": 0.034955532816705395,
+      "iterations": 5,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0809896089534609,
+      "rms": 0.027590386991957257,
+      "mean": 0.023525049208794283,
+      "iterations": 6,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.04,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.05291505201159591,
+      "rms": 0.022907909298311203,
+      "mean": 0.020790889134477374,
+      "iterations": 7,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.05004183980750917,
+      "rms": 0.023801880759065662,
+      "mean": 0.022053368611448538,
+      "iterations": 8,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.04996176453310817,
+      "rms": 0.025549260175353507,
+      "mean": 0.02390751720075462,
+      "iterations": 9,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.051045604192641314,
+      "rms": 0.027667387523615864,
+      "mean": 0.026092068747613044,
+      "iterations": 10,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.0554806305219675,
+      "rms": 0.03067116879898064,
+      "mean": 0.028765090721883147,
+      "iterations": 11,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.06100047513928394,
+      "rms": 0.03344592738599136,
+      "mean": 0.031143557415405133,
+      "iterations": 12,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.06652105476893555,
+      "rms": 0.03571982345989098,
+      "mean": 0.0330008061989794,
+      "iterations": 13,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.07204220043956909,
+      "rms": 0.03692180158040113,
+      "mean": 0.03390750985555905,
+      "iterations": 14,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.07204220043956909,
+      "rms": 0.03692180158040113,
+      "mean": 0.03390750985555905,
+      "iterations": 15,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.07204220043956909,
+      "rms": 0.03692180158040113,
+      "mean": 0.03390750985555905,
+      "iterations": 16,
+      "mask_bits": 4,
+      "effective_bits": 8,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.5177206961789873,
+      "rms": 0.5728644304541846,
+      "mean": 0.4784491577385512,
+      "iterations": 1,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.8244183527176175,
+      "rms": 0.2997107301861049,
+      "mean": 0.24289039623674513,
+      "iterations": 2,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.46010818395797576,
+      "rms": 0.1596420003052355,
+      "mean": 0.1261102604512327,
+      "iterations": 3,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.25167892596546626,
+      "rms": 0.08697214861822572,
+      "mean": 0.0721497841594679,
+      "iterations": 4,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.14308496502764373,
+      "rms": 0.04946076569084798,
+      "mean": 0.04281820402925606,
+      "iterations": 5,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.13184361830131017,
+      "rms": 0.041955733241930686,
+      "mean": 0.03717026644736784,
+      "iterations": 6,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.04,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.10766635009410079,
+      "rms": 0.042445805629296694,
+      "mean": 0.03914463569719923,
+      "iterations": 7,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.10109405524647877,
+      "rms": 0.04650744288206145,
+      "mean": 0.04356028615451464,
+      "iterations": 8,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.10109405524647877,
+      "rms": 0.05124321908887473,
+      "mean": 0.04826774519938569,
+      "iterations": 9,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.1119562995215519,
+      "rms": 0.05746308459169679,
+      "mean": 0.05379589880511874,
+      "iterations": 10,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.12285177501339076,
+      "rms": 0.06369123625199892,
+      "mean": 0.05922837602420579,
+      "iterations": 11,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.13377236213180255,
+      "rms": 0.06937225981306501,
+      "mean": 0.06403293910494876,
+      "iterations": 12,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.14471237591064373,
+      "rms": 0.07399689803030234,
+      "mean": 0.06778932916738008,
+      "iterations": 13,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.1510032712497012,
+      "rms": 0.07634993003865441,
+      "mean": 0.06959568187646803,
+      "iterations": 14,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.1510032712497012,
+      "rms": 0.07634993003865441,
+      "mean": 0.06959568187646803,
+      "iterations": 15,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.1510032712497012,
+      "rms": 0.07634993003865441,
+      "mean": 0.06959568187646803,
+      "iterations": 16,
+      "mask_bits": 5,
+      "effective_bits": 7,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.5177206961789873,
+      "rms": 0.5733128390014065,
+      "mean": 0.47887054533774315,
+      "iterations": 1,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.8383821495910134,
+      "rms": 0.3014605732145501,
+      "mean": 0.24507378379436623,
+      "iterations": 2,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.47837847008489426,
+      "rms": 0.16336835495470425,
+      "mean": 0.1311151338337512,
+      "iterations": 3,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.26855538659031847,
+      "rms": 0.09784226447809023,
+      "mean": 0.0834633000282622,
+      "iterations": 4,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.21419568166345898,
+      "rms": 0.07418690982166277,
+      "mean": 0.06617498892727607,
+      "iterations": 5,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.1840647440712802,
+      "rms": 0.07795733379723713,
+      "mean": 0.07103164984866214,
+      "iterations": 6,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.17698104064316675,
+      "rms": 0.0854893925728007,
+      "mean": 0.07895933111759375,
+      "iterations": 7,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.17698104064316675,
+      "rms": 0.09432938760224711,
+      "mean": 0.0879969281614973,
+      "iterations": 8,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.19907642716065493,
+      "rms": 0.10725985846374787,
+      "mean": 0.09953742719373421,
+      "iterations": 9,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.22117215343475058,
+      "rms": 0.12045338595365164,
+      "mean": 0.11109558988034478,
+      "iterations": 10,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.24326812688652444,
+      "rms": 0.13334758872357186,
+      "mean": 0.12220428521480625,
+      "iterations": 11,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.26536428577107257,
+      "rms": 0.14496722109813592,
+      "mean": 0.13195941533986377,
+      "iterations": 12,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.2874605873275583,
+      "rms": 0.1543250566539649,
+      "mean": 0.13949348325457483,
+      "iterations": 13,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.2987992928864916,
+      "rms": 0.15917078016312938,
+      "mean": 0.1431496089142559,
+      "iterations": 14,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.2987992928864916,
+      "rms": 0.15917078016312938,
+      "mean": 0.1431496089142559,
+      "iterations": 15,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.2987992928864916,
+      "rms": 0.15917078016312938,
+      "mean": 0.1431496089142559,
+      "iterations": 16,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.527647125828121,
+      "rms": 0.5742779186521664,
+      "mean": 0.4803805342825762,
+      "iterations": 1,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.8717898423364453,
+      "rms": 0.3054861252825373,
+      "mean": 0.250301710074964,
+      "iterations": 2,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.5400584941538535,
+      "rms": 0.18053081970675172,
+      "mean": 0.15056873957553404,
+      "iterations": 3,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.3818864430707768,
+      "rms": 0.13511077642175012,
+      "mean": 0.11844489034843976,
+      "iterations": 4,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.38982141888390887,
+      "rms": 0.1428332472307684,
+      "mean": 0.12839711980530108,
+      "iterations": 5,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.3818864430707768,
+      "rms": 0.15666380452442322,
+      "mean": 0.1422586550087303,
+      "iterations": 6,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.38711924241132806,
+      "rms": 0.17434823440775815,
+      "mean": 0.15943701304687763,
+      "iterations": 7,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.4312897263475531,
+      "rms": 0.2004190391431639,
+      "mean": 0.1824958164882901,
+      "iterations": 8,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.47546461304788373,
+      "rms": 0.22744827817427626,
+      "mean": 0.20606856854028388,
+      "iterations": 9,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.5196427796752308,
+      "rms": 0.25450528931802263,
+      "mean": 0.22932641202350723,
+      "iterations": 10,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.5638234552379202,
+      "rms": 0.28067760696630656,
+      "mean": 0.2513768929200915,
+      "iterations": 11,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6080060928019173,
+      "rms": 0.30460039256476257,
+      "mean": 0.2711957992059129,
+      "iterations": 12,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6521902936199528,
+      "rms": 0.3234850751078336,
+      "mean": 0.28625249215201404,
+      "iterations": 13,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6750828683706953,
+      "rms": 0.3335241658571338,
+      "mean": 0.2937275850690255,
+      "iterations": 14,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6750828683706953,
+      "rms": 0.3335856133686858,
+      "mean": 0.2937701323036396,
+      "iterations": 15,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6750828683706953,
+      "rms": 0.3335856133686858,
+      "mean": 0.2937701323036396,
+      "iterations": 16,
+      "mask_bits": 7,
+      "effective_bits": 5,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.6141203699970277,
+      "rms": 0.5799605623762826,
+      "mean": 0.48600011184776465,
+      "iterations": 1,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.9198612310703738,
+      "rms": 0.32473372702705755,
+      "mean": 0.2727458524106934,
+      "iterations": 2,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6240647787289655,
+      "rms": 0.23125438778378252,
+      "mean": 0.20016000909537923,
+      "iterations": 3,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.5634412751361975,
+      "rms": 0.2295084132614511,
+      "mean": 0.20587776794367274,
+      "iterations": 4,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.5995584375378963,
+      "rms": 0.2677719238157061,
+      "mean": 0.24185966414216653,
+      "iterations": 5,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6107815265828961,
+      "rms": 0.3049324300434677,
+      "mean": 0.27747003162409195,
+      "iterations": 6,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.6991674742525146,
+      "rms": 0.35726982816232167,
+      "mean": 0.32358170465219716,
+      "iterations": 7,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.7875539606213331,
+      "rms": 0.41159589021594445,
+      "mean": 0.3707628838425365,
+      "iterations": 8,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.8759408226176332,
+      "rms": 0.4668348689079072,
+      "mean": 0.4180890310544153,
+      "iterations": 9,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.9643279569553936,
+      "rms": 0.5220953354746937,
+      "mean": 0.46489353998255367,
+      "iterations": 10,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.0527152950363508,
+      "rms": 0.5745769756733997,
+      "mean": 0.5088791904000045,
+      "iterations": 11,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.1411027895159922,
+      "rms": 0.6220472819796541,
+      "mean": 0.5478798964569149,
+      "iterations": 12,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.2294904066640318,
+      "rms": 0.6586956180676056,
+      "mean": 0.5769279600703698,
+      "iterations": 13,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.2742837430362361,
+      "rms": 0.6773114785698933,
+      "mean": 0.5909565850193188,
+      "iterations": 14,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.2742837430362361,
+      "rms": 0.6776139189536587,
+      "mean": 0.5911270194766747,
+      "iterations": 15,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.2742837430362361,
+      "rms": 0.6776139189536587,
+      "mean": 0.5911270194766747,
+      "iterations": 16,
+      "mask_bits": 8,
+      "effective_bits": 4,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.6869913107818801,
+      "rms": 0.6090325547872051,
+      "mean": 0.5152413622194019,
+      "iterations": 1,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.0382165569623232,
+      "rms": 0.3922665023318153,
+      "mean": 0.3407240091813354,
+      "iterations": 2,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 0.846513742552754,
+      "rms": 0.36594044322942637,
+      "mean": 0.33101321224730124,
+      "iterations": 3,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.1013466284393718,
+      "rms": 0.43804906710830765,
+      "mean": 0.3949636910503025,
+      "iterations": 4,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.2428380194880368,
+      "rms": 0.5304562675557098,
+      "mean": 0.4773283364198488,
+      "iterations": 5,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.3924181445941877,
+      "rms": 0.6304258499604163,
+      "mean": 0.5647637497713862,
+      "iterations": 6,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.547743595078104,
+      "rms": 0.7351757122100009,
+      "mean": 0.6548988934372733,
+      "iterations": 7,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.7072469601131137,
+      "rms": 0.8386561504028721,
+      "mean": 0.743082836189658,
+      "iterations": 8,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.8698593876347072,
+      "rms": 0.9435428199921685,
+      "mean": 0.8318447077848992,
+      "iterations": 9,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.0434701632890526,
+      "rms": 1.0486332767875866,
+      "mean": 0.9204629678353339,
+      "iterations": 10,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.2199655472809043,
+      "rms": 1.1474865877069675,
+      "mean": 1.0035048028080076,
+      "iterations": 11,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.3698987256117428,
+      "rms": 1.2330112717821948,
+      "mean": 1.0736431647473734,
+      "iterations": 12,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.5393113074938913,
+      "rms": 1.3012084975413492,
+      "mean": 1.1281268300059035,
+      "iterations": 13,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.6021792655661877,
+      "rms": 1.3431413602701887,
+      "mean": 1.1596401457700203,
+      "iterations": 14,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.6021792655661877,
+      "rms": 1.3463516958209367,
+      "mean": 1.1616639930222987,
+      "iterations": 15,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.6021792655661877,
+      "rms": 1.3463516958209367,
+      "mean": 1.1616639930222987,
+      "iterations": 16,
+      "mask_bits": 9,
+      "effective_bits": 3,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.8160978867537496,
+      "rms": 0.694398093846307,
+      "mean": 0.5974239389254394,
+      "iterations": 1,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.613350185816727,
+      "rms": 0.5906848248895143,
+      "mean": 0.5240911041983211,
+      "iterations": 2,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.5067274651786413,
+      "rms": 0.6654691760668507,
+      "mean": 0.603218893469931,
+      "iterations": 3,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 1.859329817588791,
+      "rms": 0.8258324066228016,
+      "mean": 0.7445604334491892,
+      "iterations": 4,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.116603922356668,
+      "rms": 0.9986189251845242,
+      "mean": 0.8926967759489635,
+      "iterations": 5,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.046153846153846156,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.462005417049225,
+      "rms": 1.179535725756948,
+      "mean": 1.0442069983251494,
+      "iterations": 6,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.8094357410383717,
+      "rms": 1.3627000844750823,
+      "mean": 1.1951294024782173,
+      "iterations": 7,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 2.9599609683321084,
+      "rms": 1.536919112586157,
+      "mean": 1.3378687664596576,
+      "iterations": 8,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 3.2019542232430154,
+      "rms": 1.7111296490779306,
+      "mean": 1.4800856903237345,
+      "iterations": 9,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 3.540117689128084,
+      "rms": 1.8858811376939675,
+      "mean": 1.6213981467182392,
+      "iterations": 10,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 3.6674323464579595,
+      "rms": 2.0554579741304484,
+      "mean": 1.7584034503406731,
+      "iterations": 11,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 3.806926158834014,
+      "rms": 2.218165621042472,
+      "mean": 1.8885036053449415,
+      "iterations": 12,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 3.957311403185662,
+      "rms": 2.35597657912166,
+      "mean": 1.9950183764208353,
+      "iterations": 13,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 4.117394844407303,
+      "rms": 2.4403001213344675,
+      "mean": 2.0570204468011446,
+      "iterations": 14,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 4.286089950960013,
+      "rms": 2.4527987105591036,
+      "mean": 2.065240441504418,
+      "iterations": 15,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    },
+    {
+      "n": 610,
+      "max": 4.286089950960013,
+      "rms": 2.4527987105591036,
+      "mean": 2.065240441504418,
+      "iterations": 16,
+      "mask_bits": 10,
+      "effective_bits": 2,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": false
+    }
+  ],
+  "k_factor_16": [
+    {
+      "iterations": 1,
+      "K_true_n": 0.7071067811865475,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 14.12146635195723,
+      "rms_err_fixed_k": 0.5729509719080116,
+      "rms_err_correct_k": 0.591575833260455,
+      "max_err_fixed_k": 1.5275890013434195,
+      "max_err_correct_k": 1.6221825756564274,
+      "k_matters": false
+    },
+    {
+      "iterations": 2,
+      "K_true_n": 0.6324555320336758,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 3.9848804774866764,
+      "rms_err_fixed_k": 0.29949919738167535,
+      "rms_err_correct_k": 0.3018981790183324,
+      "max_err_fixed_k": 0.7982003286392294,
+      "max_err_correct_k": 0.8113359311693906,
+      "k_matters": false
+    },
+    {
+      "iterations": 3,
+      "K_true_n": 0.6135719910778963,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 1.0298801380933165,
+      "rms_err_fixed_k": 0.15771608003763402,
+      "rms_err_correct_k": 0.1580619793835644,
+      "max_err_fixed_k": 0.45067424123571787,
+      "max_err_correct_k": 0.45268891304935593,
+      "k_matters": false
+    },
+    {
+      "iterations": 4,
+      "K_true_n": 0.6088339125177524,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 0.259673036663344,
+      "rms_err_fixed_k": 0.08247987525024328,
+      "rms_err_correct_k": 0.08254601358494383,
+      "max_err_fixed_k": 0.21629279128246012,
+      "max_err_correct_k": 0.2166020204207713,
+      "k_matters": false
+    },
+    {
+      "iterations": 5,
+      "K_true_n": 0.6076482562561683,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 0.06505757948234123,
+      "rms_err_fixed_k": 0.03962424672627464,
+      "rms_err_correct_k": 0.039620035548928983,
+      "max_err_fixed_k": 0.11137378353224522,
+      "max_err_correct_k": 0.11144178757892752,
+      "k_matters": false
+    },
+    {
+      "iterations": 6,
+      "K_true_n": 0.607351770141296,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 0.01627312823863448,
+      "rms_err_fixed_k": 0.021550112994058578,
+      "rms_err_correct_k": 0.021550112994058578,
+      "max_err_fixed_k": 0.05644510012720239,
+      "max_err_correct_k": 0.05644510012720239,
+      "k_matters": false
+    },
+    {
+      "iterations": 7,
+      "K_true_n": 0.6072776440935261,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 0.004068828300387326,
+      "rms_err_fixed_k": 0.010359404788986183,
+      "rms_err_correct_k": 0.010375834292884984,
+      "max_err_fixed_k": 0.027981238985011127,
+      "max_err_correct_k": 0.028099702613311496,
+      "k_matters": false
+    },
+    {
+      "iterations": 8,
+      "K_true_n": 0.6072591122988928,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 0.0010172412214821478,
+      "rms_err_fixed_k": 0.00528032029337336,
+      "rms_err_correct_k": 0.005283574502367951,
+      "max_err_fixed_k": 0.013815076981639494,
+      "max_err_correct_k": 0.013770514255717849,
+      "k_matters": false
+    },
+    {
+      "iterations": 9,
+      "K_true_n": 0.6072544793325625,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 0.00025431243963071283,
+      "rms_err_fixed_k": 0.002758933224371759,
+      "rms_err_correct_k": 0.0027355240631537297,
+      "max_err_fixed_k": 0.008617688493773248,
+      "max_err_correct_k": 0.008400755552976489,
+      "k_matters": false
+    },
+    {
+      "iterations": 10,
+      "K_true_n": 0.6072533210898753,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 6.357824330375496e-05,
+      "rms_err_fixed_k": 0.001478997065183342,
+      "rms_err_correct_k": 0.0014225722695375366,
+      "max_err_fixed_k": 0.0046628143885555275,
+      "max_err_correct_k": 0.0044271545795729885,
+      "k_matters": false
+    },
+    {
+      "iterations": 11,
+      "K_true_n": 0.6072530315291345,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 1.5894569168357235e-05,
+      "rms_err_fixed_k": 0.0008609198219504573,
+      "rms_err_correct_k": 0.0007986829642115394,
+      "max_err_fixed_k": 0.0027683174288783198,
+      "max_err_correct_k": 0.0025210922361549102,
+      "k_matters": true
+    },
+    {
+      "iterations": 12,
+      "K_true_n": 0.607252959138945,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 3.973642820632487e-06,
+      "rms_err_fixed_k": 0.0006322694201421182,
+      "rms_err_correct_k": 0.0005591926658343028,
+      "max_err_fixed_k": 0.0017786788600817633,
+      "max_err_correct_k": 0.0016167885877937007,
+      "k_matters": true
+    },
+    {
+      "iterations": 13,
+      "K_true_n": 0.6072529410413973,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 9.934107393347453e-07,
+      "rms_err_fixed_k": 0.0005726183572484293,
+      "rms_err_correct_k": 0.0004891423110049005,
+      "max_err_fixed_k": 0.0013108402233701437,
+      "max_err_correct_k": 0.0012797799748963047,
+      "k_matters": true
+    },
+    {
+      "iterations": 14,
+      "K_true_n": 0.6072529365170103,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 2.483526821133802e-07,
+      "rms_err_fixed_k": 0.0005693618011764854,
+      "rms_err_correct_k": 0.0004822875933342473,
+      "max_err_fixed_k": 0.001557723297984563,
+      "max_err_correct_k": 0.0013095315945050364,
+      "k_matters": true
+    },
+    {
+      "iterations": 15,
+      "K_true_n": 0.6072529353859135,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 6.208816150263751e-08,
+      "rms_err_fixed_k": 0.0005693618011764854,
+      "rms_err_correct_k": 0.0004822875933342473,
+      "max_err_fixed_k": 0.001557723297984563,
+      "max_err_correct_k": 0.0013095315945050364,
+      "k_matters": true
+    },
+    {
+      "iterations": 16,
+      "K_true_n": 0.6072529351031394,
+      "K_asymptotic_fixed": 0.6072529350088813,
+      "K_rel_error_pct": 1.552204038288739e-08,
+      "rms_err_fixed_k": 0.0005693618011764854,
+      "rms_err_correct_k": 0.0004822875933342473,
+      "max_err_fixed_k": 0.001557723297984563,
+      "max_err_correct_k": 0.0013095315945050364,
+      "k_matters": true
+    }
+  ],
+  "error_reference_check": [
+    {
+      "iterations": 1,
+      "checked": 500,
+      "diffs_vs_golden_model": 0
+    },
+    {
+      "iterations": 4,
+      "checked": 500,
+      "diffs_vs_golden_model": 0
+    },
+    {
+      "iterations": 8,
+      "checked": 500,
+      "diffs_vs_golden_model": 0
+    }
+  ],
+  "mode_proposals_joint_exploratory": {
+    "Low": {
+      "n": 610,
+      "max": 0.26855538659031847,
+      "rms": 0.09784226447809023,
+      "mean": 0.0834633000282622,
+      "iterations": 4,
+      "mask_bits": 6,
+      "effective_bits": 6,
+      "overflow_freq": 0.036923076923076927,
+      "hw_realized": false
+    },
+    "Mid": {
+      "n": 610,
+      "max": 0.021473392167477186,
+      "rms": 0.0072684513672332356,
+      "mean": 0.006277303874868897,
+      "iterations": 8,
+      "mask_bits": 2,
+      "effective_bits": 10,
+      "overflow_freq": 0.043076923076923075,
+      "hw_realized": false
+    },
+    "High": {
+      "n": 610,
+      "max": 0.0027683174288783198,
+      "rms": 0.0008609198219504573,
+      "mean": 0.0007290182609160642,
+      "iterations": 11,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "hw_realized": true
+    }
+  },
+  "mode_proposals_practical_iterations_only": {
+    "Low": {
+      "n": 610,
+      "max": 0.21629279128246012,
+      "rms": 0.08247987525024328,
+      "mean": 0.06658715063833265,
+      "iterations": 4,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.036923076923076927,
+      "edge_max": 18.603973855610363,
+      "edge_rms": 10.288691190917463
+    },
+    "Mid": {
+      "n": 610,
+      "max": 0.013815076981639494,
+      "rms": 0.00528032029337336,
+      "mean": 0.0042210829778927365,
+      "iterations": 8,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628114168032504,
+      "edge_rms": 11.463907337445766
+    },
+    "High": {
+      "n": 610,
+      "max": 0.0027683174288783198,
+      "rms": 0.0008609198219504573,
+      "mean": 0.0007290182609160642,
+      "iterations": 11,
+      "mask_bits": 0,
+      "effective_bits": 12,
+      "overflow_freq": 0.04923076923076923,
+      "edge_max": 18.628189585061335,
+      "edge_rms": 11.463966185235838
+    }
+  },
+  "wasteful_iterations": [
+    {
+      "iterations": 14,
+      "mask_bits": 0,
+      "rms": 0.0005693618011764854,
+      "prev_rms": 0.0005726183572484293
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 0,
+      "rms": 0.0005693618011764854,
+      "prev_rms": 0.0005693618011764854
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 0,
+      "rms": 0.0005693618011764854,
+      "prev_rms": 0.0005693618011764854
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 1,
+      "rms": 0.002748416343228631,
+      "prev_rms": 0.002748416343228631
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 1,
+      "rms": 0.002748416343228631,
+      "prev_rms": 0.002748416343228631
+    },
+    {
+      "iterations": 10,
+      "mask_bits": 2,
+      "rms": 0.005961872900287035,
+      "prev_rms": 0.005934356641474764
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 2,
+      "rms": 0.0076331928851212875,
+      "prev_rms": 0.0076331928851212875
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 2,
+      "rms": 0.0076331928851212875,
+      "prev_rms": 0.0076331928851212875
+    },
+    {
+      "iterations": 9,
+      "mask_bits": 3,
+      "rms": 0.012022669628742705,
+      "prev_rms": 0.012008568076474494
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 3,
+      "rms": 0.017004855468890447,
+      "prev_rms": 0.017004855468890447
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 3,
+      "rms": 0.017004855468890447,
+      "prev_rms": 0.017004855468890447
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 4,
+      "rms": 0.03692180158040113,
+      "prev_rms": 0.03692180158040113
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 4,
+      "rms": 0.03692180158040113,
+      "prev_rms": 0.03692180158040113
+    },
+    {
+      "iterations": 7,
+      "mask_bits": 5,
+      "rms": 0.042445805629296694,
+      "prev_rms": 0.041955733241930686
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 5,
+      "rms": 0.07634993003865441,
+      "prev_rms": 0.07634993003865441
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 5,
+      "rms": 0.07634993003865441,
+      "prev_rms": 0.07634993003865441
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 6,
+      "rms": 0.15917078016312938,
+      "prev_rms": 0.15917078016312938
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 6,
+      "rms": 0.15917078016312938,
+      "prev_rms": 0.15917078016312938
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 7,
+      "rms": 0.3335856133686858,
+      "prev_rms": 0.3335241658571338
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 7,
+      "rms": 0.3335856133686858,
+      "prev_rms": 0.3335856133686858
+    },
+    {
+      "iterations": 4,
+      "mask_bits": 8,
+      "rms": 0.2295084132614511,
+      "prev_rms": 0.23125438778378252
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 8,
+      "rms": 0.6776139189536587,
+      "prev_rms": 0.6773114785698933
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 8,
+      "rms": 0.6776139189536587,
+      "prev_rms": 0.6776139189536587
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 9,
+      "rms": 1.3463516958209367,
+      "prev_rms": 1.3431413602701887
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 9,
+      "rms": 1.3463516958209367,
+      "prev_rms": 1.3463516958209367
+    },
+    {
+      "iterations": 15,
+      "mask_bits": 10,
+      "rms": 2.4527987105591036,
+      "prev_rms": 2.4403001213344675
+    },
+    {
+      "iterations": 16,
+      "mask_bits": 10,
+      "rms": 2.4527987105591036,
+      "prev_rms": 2.4527987105591036
+    }
+  ],
+  "wasteful_bits": [
+    {
+      "iterations": 1,
+      "mask_bits": 1,
+      "rms": 0.5729475582286059,
+      "finer_rms": 0.5729509719080116
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 1,
+      "rms": 0.29951230464639816,
+      "finer_rms": 0.29949919738167535
+    },
+    {
+      "iterations": 3,
+      "mask_bits": 1,
+      "rms": 0.1577567856624321,
+      "finer_rms": 0.15771608003763402
+    },
+    {
+      "iterations": 4,
+      "mask_bits": 1,
+      "rms": 0.08253105000679,
+      "finer_rms": 0.08247987525024328
+    },
+    {
+      "iterations": 5,
+      "mask_bits": 1,
+      "rms": 0.03967396680419684,
+      "finer_rms": 0.03962424672627464
+    },
+    {
+      "iterations": 6,
+      "mask_bits": 1,
+      "rms": 0.02157610450192226,
+      "finer_rms": 0.021550112994058578
+    },
+    {
+      "iterations": 7,
+      "mask_bits": 1,
+      "rms": 0.010532382927701015,
+      "finer_rms": 0.010359404788986183
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 2,
+      "rms": 0.5729396782286839,
+      "finer_rms": 0.5729475582286059
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 2,
+      "rms": 0.29947714298057565,
+      "finer_rms": 0.29951230464639816
+    },
+    {
+      "iterations": 3,
+      "mask_bits": 2,
+      "rms": 0.15780696490973337,
+      "finer_rms": 0.1577567856624321
+    },
+    {
+      "iterations": 4,
+      "mask_bits": 2,
+      "rms": 0.08267071312033332,
+      "finer_rms": 0.08253105000679
+    },
+    {
+      "iterations": 5,
+      "mask_bits": 2,
+      "rms": 0.039845304750229786,
+      "finer_rms": 0.03967396680419684
+    },
+    {
+      "iterations": 6,
+      "mask_bits": 2,
+      "rms": 0.02175407503332574,
+      "finer_rms": 0.02157610450192226
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 3,
+      "rms": 0.572907904515109,
+      "finer_rms": 0.5729396782286839
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 3,
+      "rms": 0.2995159903695129,
+      "finer_rms": 0.29947714298057565
+    },
+    {
+      "iterations": 3,
+      "mask_bits": 3,
+      "rms": 0.15791576173392138,
+      "finer_rms": 0.15780696490973337
+    },
+    {
+      "iterations": 4,
+      "mask_bits": 3,
+      "rms": 0.0829222496660369,
+      "finer_rms": 0.08267071312033332
+    },
+    {
+      "iterations": 5,
+      "mask_bits": 3,
+      "rms": 0.04042396875138526,
+      "finer_rms": 0.039845304750229786
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 4,
+      "rms": 0.5728113615953164,
+      "finer_rms": 0.572907904515109
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 4,
+      "rms": 0.29949745864716576,
+      "finer_rms": 0.2995159903695129
+    },
+    {
+      "iterations": 3,
+      "mask_bits": 4,
+      "rms": 0.15820754006974747,
+      "finer_rms": 0.15791576173392138
+    },
+    {
+      "iterations": 4,
+      "mask_bits": 4,
+      "rms": 0.08396633016757428,
+      "finer_rms": 0.0829222496660369
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 5,
+      "rms": 0.5728644304541846,
+      "finer_rms": 0.5728113615953164
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 5,
+      "rms": 0.2997107301861049,
+      "finer_rms": 0.29949745864716576
+    },
+    {
+      "iterations": 3,
+      "mask_bits": 5,
+      "rms": 0.1596420003052355,
+      "finer_rms": 0.15820754006974747
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 6,
+      "rms": 0.5733128390014065,
+      "finer_rms": 0.5728644304541846
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 6,
+      "rms": 0.3014605732145501,
+      "finer_rms": 0.2997107301861049
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 7,
+      "rms": 0.5742779186521664,
+      "finer_rms": 0.5733128390014065
+    },
+    {
+      "iterations": 2,
+      "mask_bits": 7,
+      "rms": 0.3054861252825373,
+      "finer_rms": 0.3014605732145501
+    },
+    {
+      "iterations": 1,
+      "mask_bits": 8,
+      "rms": 0.5799605623762826,
+      "finer_rms": 0.5742779186521664
+    }
+  ]
+}

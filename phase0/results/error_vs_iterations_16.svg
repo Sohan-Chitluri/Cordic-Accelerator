@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" font-family="sans-serif" font-size="11">
+<rect width="640" height="400" fill="white"/>
+<text x="320.0" y="20" text-anchor="middle" font-size="14">Error vs. iteration count, 1-16 (FRACT_W=12, real RTL, bit-exact-verified)</text>
+<line x1="60" y1="340" x2="580" y2="340" stroke="black"/>
+<line x1="60" y1="60" x2="60" y2="340" stroke="black"/>
+<text x="320.0" y="385" text-anchor="middle">iterations</text>
+<text x="15" y="200.0" text-anchor="middle" transform="rotate(-90,15,200.0)">abs error (real units) (log10)</text>
+<path d="M60.0,94.8 L94.7,117.8 L129.3,140.5 L164.0,163.5 L198.7,189.5 L233.3,211.1 L268.0,237.1 L302.7,261.0 L337.3,284.0 L372.0,306.1 L406.7,325.3 L441.3,336.3 L476.0,339.8 L510.7,340.0 L545.3,340.0 L580.0,340.0" fill="none" stroke="#1f77b4" stroke-width="2"/>
+<circle cx="60.0" cy="94.8" r="2.5" fill="#1f77b4"/>
+<circle cx="94.7" cy="117.8" r="2.5" fill="#1f77b4"/>
+<circle cx="129.3" cy="140.5" r="2.5" fill="#1f77b4"/>
+<circle cx="164.0" cy="163.5" r="2.5" fill="#1f77b4"/>
+<circle cx="198.7" cy="189.5" r="2.5" fill="#1f77b4"/>
+<circle cx="233.3" cy="211.1" r="2.5" fill="#1f77b4"/>
+<circle cx="268.0" cy="237.1" r="2.5" fill="#1f77b4"/>
+<circle cx="302.7" cy="261.0" r="2.5" fill="#1f77b4"/>
+<circle cx="337.3" cy="284.0" r="2.5" fill="#1f77b4"/>
+<circle cx="372.0" cy="306.1" r="2.5" fill="#1f77b4"/>
+<circle cx="406.7" cy="325.3" r="2.5" fill="#1f77b4"/>
+<circle cx="441.3" cy="336.3" r="2.5" fill="#1f77b4"/>
+<circle cx="476.0" cy="339.8" r="2.5" fill="#1f77b4"/>
+<circle cx="510.7" cy="340.0" r="2.5" fill="#1f77b4"/>
+<circle cx="545.3" cy="340.0" r="2.5" fill="#1f77b4"/>
+<circle cx="580.0" cy="340.0" r="2.5" fill="#1f77b4"/>
+<text x="575" y="60" text-anchor="end" fill="#1f77b4">RMS error</text>
+<path d="M60.0,60.0 L94.7,83.0 L129.3,103.3 L164.0,129.3 L198.7,152.9 L233.3,177.0 L268.0,201.9 L302.7,226.9 L337.3,243.6 L372.0,265.4 L406.7,283.9 L441.3,299.6 L476.0,310.4 L510.7,304.3 L545.3,304.3 L580.0,304.3" fill="none" stroke="#d62728" stroke-width="2"/>
+<circle cx="60.0" cy="60.0" r="2.5" fill="#d62728"/>
+<circle cx="94.7" cy="83.0" r="2.5" fill="#d62728"/>
+<circle cx="129.3" cy="103.3" r="2.5" fill="#d62728"/>
+<circle cx="164.0" cy="129.3" r="2.5" fill="#d62728"/>
+<circle cx="198.7" cy="152.9" r="2.5" fill="#d62728"/>
+<circle cx="233.3" cy="177.0" r="2.5" fill="#d62728"/>
+<circle cx="268.0" cy="201.9" r="2.5" fill="#d62728"/>
+<circle cx="302.7" cy="226.9" r="2.5" fill="#d62728"/>
+<circle cx="337.3" cy="243.6" r="2.5" fill="#d62728"/>
+<circle cx="372.0" cy="265.4" r="2.5" fill="#d62728"/>
+<circle cx="406.7" cy="283.9" r="2.5" fill="#d62728"/>
+<circle cx="441.3" cy="299.6" r="2.5" fill="#d62728"/>
+<circle cx="476.0" cy="310.4" r="2.5" fill="#d62728"/>
+<circle cx="510.7" cy="304.3" r="2.5" fill="#d62728"/>
+<circle cx="545.3" cy="304.3" r="2.5" fill="#d62728"/>
+<circle cx="580.0" cy="304.3" r="2.5" fill="#d62728"/>
+<text x="575" y="75" text-anchor="end" fill="#d62728">Max error</text>
+</svg>
