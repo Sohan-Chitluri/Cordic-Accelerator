@@ -47,7 +47,8 @@ module cordic_pipeline #(
   input  logic                    ready_in,
   // Status
   output logic                    overflow,
-  output logic                    irq
+  output logic                    irq,
+  output logic                    status_mode_clamped_sticky
 );
 
   // Latency: ITERATIONS stage registers + 1 cycle for the completed vector
@@ -71,20 +72,50 @@ module cordic_pipeline #(
   localparam int VALID_DEPTH = ITERATIONS + 1;
 
   // ---------------------------------------------------------------------------
-  // CONFIGURATION REGISTERS
+  // CONFIGURATION REGISTERS & CLAMPING (ARCH_SPEC.md §1)
   // ---------------------------------------------------------------------------
-  logic cfg_saturate_r;
+  logic [3:0] effective_cfg_iterations;
+  logic       mode_clamped;
+
+  always_comb begin
+    if (cfg_iterations == 4'd0) begin
+      effective_cfg_iterations = 4'd1;
+      mode_clamped             = 1'b1;
+    end else if (cfg_iterations > 4'd11) begin
+      effective_cfg_iterations = 4'd11;
+      mode_clamped             = 1'b1;
+    end else begin
+      effective_cfg_iterations = cfg_iterations;
+      mode_clamped             = 1'b0;
+    end
+  end
+
+  logic [3:0] cfg_iterations_r;
+  logic       cfg_saturate_r;
 
   always_ff @(posedge clk) begin
     if (!rst_n) begin
-      cfg_saturate_r <= 1'b1;
-      config_ready   <= 1'b1;
+      cfg_saturate_r             <= 1'b1;
+      cfg_iterations_r           <= 4'd11;
+      config_ready               <= 1'b1;
+      status_mode_clamped_sticky <= 1'b0;
     end else begin
       config_ready <= 1'b1;
-      if (config_valid && config_ready)
-        cfg_saturate_r <= cfg_saturate;
+      if (config_valid && config_ready) begin
+        cfg_saturate_r   <= cfg_saturate;
+        cfg_iterations_r <= effective_cfg_iterations;
+        if (mode_clamped)
+          status_mode_clamped_sticky <= 1'b1;
+      end
     end
   end
+
+  // Same-cycle capture semantics: when config and data arrive in same cycle t,
+  // admitted transaction captures the newly presented config values.
+  logic [3:0] admitted_iterations;
+  logic       admitted_saturate;
+  assign admitted_iterations = (config_valid && config_ready) ? effective_cfg_iterations : cfg_iterations_r;
+  assign admitted_saturate   = (config_valid && config_ready) ? cfg_saturate             : cfg_saturate_r;
 
   // ---------------------------------------------------------------------------
   // K-PRESCALE (input stage only) — shift-add constant multiply by K
@@ -147,7 +178,7 @@ module cordic_pipeline #(
   // ---------------------------------------------------------------------------
   logic cfg_saturate_sr [0:ITERATIONS-1];
 
-  assign cfg_saturate_sr[0] = cfg_saturate_r;
+  assign cfg_saturate_sr[0] = admitted_saturate;
 
   always_ff @(posedge clk) begin
     if (!rst_n) begin
@@ -156,6 +187,80 @@ module cordic_pipeline #(
       for (int k = 1; k < ITERATIONS; k++) cfg_saturate_sr[k] <= cfg_saturate_sr[k-1];
     end
   end
+
+  // ---------------------------------------------------------------------------
+  // THERMOMETER DECODE & REPLICATED ACTIVE REGISTERS (ARCH_SPEC.md §1)
+  //
+  // active_mask[i] is asserted if stage i executes active rotation for this
+  // transaction. If stage_valid[0]==0 (bubble), all active bits are 0.
+  // Replicated copies (active_x_r, active_y_r, active_z_r) ensure each
+  // stage-local control flip-flop drives strictly <= 17 loads.
+  // ---------------------------------------------------------------------------
+  logic [ITERATIONS-1:0] active_mask;
+  always_comb begin
+    for (int i = 0; i < ITERATIONS; i++) begin
+      active_mask[i] = stage_valid[0] && (i < admitted_iterations);
+    end
+  end
+
+  logic active_x_r [0:ITERATIONS-1];
+  logic active_y_r [0:ITERATIONS-1];
+  logic active_z_r [0:ITERATIONS-1];
+
+  assign active_x_r[0] = active_mask[0];
+  assign active_y_r[0] = active_mask[0];
+  assign active_z_r[0] = active_mask[0];
+
+  for (genvar k = 1; k < ITERATIONS; k++) begin : g_active_regs
+    if (k == 1) begin : g_k1
+      logic sr_x, sr_y, sr_z;
+      always_ff @(posedge clk) begin
+        if (!rst_n) begin
+          sr_x <= 1'b0;
+          sr_y <= 1'b0;
+          sr_z <= 1'b0;
+        end else begin
+          sr_x <= active_mask[k];
+          sr_y <= active_mask[k];
+          sr_z <= active_mask[k];
+        end
+      end
+      assign active_x_r[k] = sr_x;
+      assign active_y_r[k] = sr_y;
+      assign active_z_r[k] = sr_z;
+    end else begin : g_kn
+      logic [k-1:0] sr_x, sr_y, sr_z;
+      always_ff @(posedge clk) begin
+        if (!rst_n) begin
+          sr_x <= '0;
+          sr_y <= '0;
+          sr_z <= '0;
+        end else begin
+          sr_x <= {sr_x[k-2:0], active_mask[k]};
+          sr_y <= {sr_y[k-2:0], active_mask[k]};
+          sr_z <= {sr_z[k-2:0], active_mask[k]};
+        end
+      end
+      assign active_x_r[k] = sr_x[k-1];
+      assign active_y_r[k] = sr_y[k-1];
+      assign active_z_r[k] = sr_z[k-1];
+    end
+  end
+
+  // Per-transaction mode tag propagation for output FIFO storage
+  logic [3:0] mode_pipe [0:ITERATIONS-1];
+  assign mode_pipe[0] = admitted_iterations;
+
+  always_ff @(posedge clk) begin
+    if (!rst_n) begin
+      for (int k = 1; k < ITERATIONS; k++) mode_pipe[k] <= 4'd11;
+    end else begin
+      for (int k = 1; k < ITERATIONS; k++) mode_pipe[k] <= mode_pipe[k-1];
+    end
+  end
+
+  logic [3:0] mode_final;
+  assign mode_final = mode_pipe[ITERATIONS-1];
 
   // ---------------------------------------------------------------------------
   // PER-TRANSACTION OVERFLOW ACCUMULATION (fixes overflow-attribution bug)
@@ -229,6 +334,9 @@ module cordic_pipeline #(
     ) stage_inst (
       .clk      (clk),
       .rst_n    (rst_n),
+      .active_x (active_x_r[i]),
+      .active_y (active_y_r[i]),
+      .active_z (active_z_r[i]),
       .x_in     (stage_x[i]),
       .y_in     (stage_y[i]),
       .z_in     (stage_z[i]),
@@ -289,10 +397,13 @@ module cordic_pipeline #(
   localparam int FIFO_AW    = (FIFO_DEPTH <= 1) ? 1 : $clog2(FIFO_DEPTH);
   localparam int CNT_W      = $clog2(FIFO_DEPTH + 1);
 
-  logic signed [WIDTH-1:0] fifo_x   [0:FIFO_DEPTH-1];
-  logic signed [WIDTH-1:0] fifo_y   [0:FIFO_DEPTH-1];
-  logic signed [WIDTH-1:0] fifo_z   [0:FIFO_DEPTH-1];
-  logic                    fifo_ovf [0:FIFO_DEPTH-1];
+  logic signed [WIDTH-1:0] fifo_x    [0:FIFO_DEPTH-1];
+  logic signed [WIDTH-1:0] fifo_y    [0:FIFO_DEPTH-1];
+  logic signed [WIDTH-1:0] fifo_z    [0:FIFO_DEPTH-1];
+  logic                    fifo_ovf  [0:FIFO_DEPTH-1];
+  /* verilator lint_off UNUSEDSIGNAL */
+  logic [3:0]              fifo_mode [0:FIFO_DEPTH-1];
+  /* verilator lint_on UNUSEDSIGNAL */
 
   logic [FIFO_AW-1:0] wr_ptr, rd_ptr;
   logic [CNT_W-1:0]   fifo_count;     // entries actually parked in the FIFO
@@ -320,17 +431,14 @@ module cordic_pipeline #(
       reserved_count <= '0;
     end else begin
       // FIFO storage: capture every completion, indexed by wr_ptr.
-      // Overflow from overflow_final = per-transaction accumulated overflow
-      // across all stages (see PER-TRANSACTION OVERFLOW ACCUMULATION above),
-      // matching the golden model where overflow is ORed across all CORDIC
-      // iterations of the SAME transaction — not a cross-transaction OR of
-      // whatever else happens to be in flight.
+      // Stores data payload, per-transaction overflow, and 4-bit mode tag.
       if (fifo_push) begin
-        fifo_x[wr_ptr]   <= stage_x[ITERATIONS];
-        fifo_y[wr_ptr]   <= stage_y[ITERATIONS];
-        fifo_z[wr_ptr]   <= stage_z[ITERATIONS];
-        fifo_ovf[wr_ptr] <= overflow_final;
-        wr_ptr           <= (wr_ptr == FIFO_AW'(FIFO_DEPTH - 1)) ? '0 : wr_ptr + 1'b1;
+        fifo_x[wr_ptr]    <= stage_x[ITERATIONS];
+        fifo_y[wr_ptr]    <= stage_y[ITERATIONS];
+        fifo_z[wr_ptr]    <= stage_z[ITERATIONS];
+        fifo_ovf[wr_ptr]  <= overflow_final;
+        fifo_mode[wr_ptr] <= mode_final;
+        wr_ptr            <= (wr_ptr == FIFO_AW'(FIFO_DEPTH - 1)) ? '0 : wr_ptr + 1'b1;
       end
       if (fifo_pop)
         rd_ptr <= (rd_ptr == FIFO_AW'(FIFO_DEPTH - 1)) ? '0 : rd_ptr + 1'b1;

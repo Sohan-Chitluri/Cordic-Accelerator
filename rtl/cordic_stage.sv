@@ -20,6 +20,9 @@ module cordic_stage #(
 ) (
   input  logic                    clk,
   input  logic                    rst_n,
+  input  logic                    active_x, // 1 = active rotation, 0 = operand-isolated passthrough
+  input  logic                    active_y, // 1 = active rotation, 0 = operand-isolated passthrough
+  input  logic                    active_z, // 1 = active rotation, 0 = operand-isolated passthrough
   input  logic signed [WIDTH-1:0] x_in,
   input  logic signed [WIDTH-1:0] y_in,
   input  logic signed [WIDTH-1:0] z_in,
@@ -143,11 +146,27 @@ module cordic_stage #(
   // but never truncates/negates an operand outside fp_add_sub's own
   // (now-correct, sign-extend-first) overflow-safe path.
   logic         op_x, op_y;
+  logic         op_x_iso, op_y_iso, op_z_iso;
+  logic signed [WIDTH-1:0] x_shift_iso, y_shift_iso, angle_iso;
+
   always_comb begin
     op_x = sigma;    // sigma=1: x_new = x_in - y_shifted (subtract)
-                      // sigma=0: x_new = x_in + y_shifted (add)
-    op_y = ~sigma;    // sigma=1: y_new = y_in + x_shifted (add)
-                      // sigma=0: y_new = y_in - x_shifted (subtract)
+                     // sigma=0: x_new = x_in + y_shifted (add)
+    op_y = ~sigma;   // sigma=1: y_new = y_in + x_shifted (add)
+                     // sigma=0: y_new = y_in - x_shifted (subtract)
+
+    // Operand isolation for inactive stages (ARCH_SPEC.md Architecture B1)
+    // Zero shifted operands and atan constants before fp_add_sub.
+    // When inactive, fp_add_sub computes x + 0 = x, y + 0 = y, z + 0 = z
+    // with zero series multiplexer delay.
+    y_shift_iso = active_x ? y_shifted : '0;
+    op_x_iso    = active_x & op_x;
+
+    x_shift_iso = active_y ? x_shifted : '0;
+    op_y_iso    = active_y & op_y;
+
+    angle_iso   = active_z ? (sigma ? STAGE_ANGLE : -STAGE_ANGLE) : '0;
+    op_z_iso    = active_z;
   end
 
   // Three fp_add_sub instances
@@ -157,8 +176,8 @@ module cordic_stage #(
   // X path: x_new = x_in -/+ (y_in >> STAGE_IDX), sign selected by sigma via op
   fp_add_sub #(.WIDTH(WIDTH), .FRACT_W(FRACT_W)) x_adder (
     .a       (x_in),
-    .b       (y_shifted),
-    .op      (op_x),
+    .b       (y_shift_iso),
+    .op      (op_x_iso),
     .sat     (sat),
     .result  (x_comb),
     .overflow(ovf_x)
@@ -167,8 +186,8 @@ module cordic_stage #(
   // Y path: y_new = y_in +/- (x_in >> STAGE_IDX), sign selected by sigma via op
   fp_add_sub #(.WIDTH(WIDTH), .FRACT_W(FRACT_W)) y_adder (
     .a       (y_in),
-    .b       (x_shifted),
-    .op      (op_y),
+    .b       (x_shift_iso),
+    .op      (op_y_iso),
     .sat     (sat),
     .result  (y_comb),
     .overflow(ovf_y)
@@ -178,8 +197,8 @@ module cordic_stage #(
   // Note: z wraps (no saturation); convergence property guarantees z → 0
   fp_add_sub #(.WIDTH(WIDTH), .FRACT_W(FRACT_W)) z_adder (
     .a       (z_in),
-    .b       (sigma ? STAGE_ANGLE : -STAGE_ANGLE),
-    .op      (1'b1),      // subtract (sigma already applied to b)
+    .b       (angle_iso),
+    .op      (op_z_iso),
     .sat     (1'b0),      // z-path wraps; saturation would break convergence
     .result  (z_comb),
     .overflow(ovf_z)
@@ -200,7 +219,7 @@ module cordic_stage #(
       y_out     <= y_comb;
       z_out     <= z_comb;
       valid_out <= valid_in;
-      overflow  <= ovf_x | ovf_y;  // z overflow excluded (z wraps by design)
+      overflow  <= active_x ? (ovf_x | ovf_y) : 1'b0;  // z overflow excluded (z wraps by design)
     end
   end
 

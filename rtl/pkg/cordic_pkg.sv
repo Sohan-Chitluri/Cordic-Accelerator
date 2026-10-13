@@ -13,7 +13,7 @@ package cordic_pkg;
   // ---------------------------------------------------------------------------
   parameter int WIDTH      = 16;
   parameter int FRACT_W    = 12;
-  parameter int ITERATIONS = 8;
+  parameter int ITERATIONS = 11;
 
   localparam int STAGE_IDX_W = $clog2(ITERATIONS);
 

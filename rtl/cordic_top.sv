@@ -37,7 +37,8 @@ module cordic_top #(
   input  logic                    ready_in,
   // Status
   output logic                    overflow,
-  output logic                    irq
+  output logic                    irq,
+  output logic                    status_mode_clamped_sticky
 );
 
   cordic_pipeline #(
@@ -62,7 +63,8 @@ module cordic_top #(
     .valid_out    (valid_out),
     .ready_in     (ready_in),
     .overflow     (overflow),
-    .irq          (irq)
+    .irq          (irq),
+    .status_mode_clamped_sticky(status_mode_clamped_sticky)
   );
 
 endmodule
