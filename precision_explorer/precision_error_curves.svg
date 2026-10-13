@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="480" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="11">
+<rect width="780" height="480" fill="#ffffff"/>
+<text x="340.0" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#24292f">Adaptive-11 CORDIC: Numerical Error vs. Iteration Mode</text>
+<text x="340.0" y="48" text-anchor="middle" font-size="11" fill="#57606a">Relative to Fixed-11 Reference over Canonical Vectors (Q3.12 LSB Units, Log Scale)</text>
+<line x1="80" y1="381.7" x2="600" y2="381.7" stroke="#e1e4e8" stroke-dasharray="3,3"/>
+<text x="70" y="385.7" text-anchor="end" fill="#57606a" font-size="10">10^0 (1)</text>
+<line x1="80" y1="305.1" x2="600" y2="305.1" stroke="#e1e4e8" stroke-dasharray="3,3"/>
+<text x="70" y="309.1" text-anchor="end" fill="#57606a" font-size="10">10^1 (10)</text>
+<line x1="80" y1="228.5" x2="600" y2="228.5" stroke="#e1e4e8" stroke-dasharray="3,3"/>
+<text x="70" y="232.5" text-anchor="end" fill="#57606a" font-size="10">10^2 (100)</text>
+<line x1="80" y1="151.9" x2="600" y2="151.9" stroke="#e1e4e8" stroke-dasharray="3,3"/>
+<text x="70" y="155.9" text-anchor="end" fill="#57606a" font-size="10">10^3 (1,000)</text>
+<line x1="80" y1="75.3" x2="600" y2="75.3" stroke="#e1e4e8" stroke-dasharray="3,3"/>
+<text x="70" y="79.3" text-anchor="end" fill="#57606a" font-size="10">10^4 (10,000)</text>
+<line x1="80" y1="420.0" x2="600" y2="420.0" stroke="#d0d7de" stroke-width="1"/>
+<text x="70" y="424.0" text-anchor="end" fill="#24292f" font-weight="bold" font-size="10">0 (Exact)</text>
+<line x1="80.0" y1="420" x2="80.0" y2="425" stroke="#24292f"/>
+<text x="80.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">1</text>
+<line x1="132.0" y1="420" x2="132.0" y2="425" stroke="#24292f"/>
+<text x="132.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">2</text>
+<line x1="184.0" y1="420" x2="184.0" y2="425" stroke="#24292f"/>
+<text x="184.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">3</text>
+<line x1="236.0" y1="420" x2="236.0" y2="425" stroke="#24292f"/>
+<text x="236.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">4</text>
+<line x1="288.0" y1="420" x2="288.0" y2="425" stroke="#24292f"/>
+<text x="288.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">5</text>
+<line x1="340.0" y1="420" x2="340.0" y2="425" stroke="#24292f"/>
+<text x="340.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">6</text>
+<line x1="392.0" y1="420" x2="392.0" y2="425" stroke="#24292f"/>
+<text x="392.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">7</text>
+<line x1="444.0" y1="420" x2="444.0" y2="425" stroke="#24292f"/>
+<text x="444.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">8</text>
+<line x1="496.0" y1="420" x2="496.0" y2="425" stroke="#24292f"/>
+<text x="496.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">9</text>
+<line x1="548.0" y1="420" x2="548.0" y2="425" stroke="#24292f"/>
+<text x="548.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">10</text>
+<line x1="600.0" y1="420" x2="600.0" y2="425" stroke="#24292f"/>
+<text x="600.0" y="438" text-anchor="middle" fill="#24292f" font-weight="bold">11</text>
+<line x1="80" y1="420" x2="600" y2="420" stroke="#24292f" stroke-width="1.5"/>
+<line x1="80" y1="60" x2="80" y2="420" stroke="#24292f" stroke-width="1.5"/>
+<text x="340.0" y="465" text-anchor="middle" font-size="12" font-weight="bold" fill="#24292f">Iteration Mode (cfg_iterations)</text>
+<text x="20" y="240.0" text-anchor="middle" transform="rotate(-90, 20, 240.0)" font-size="12" font-weight="bold" fill="#24292f">Error vs. Fixed-11 (LSBs, Log10)</text>
+<path d="M80.0,109.5 L132.0,132.2 L184.0,155.6 L236.0,178.6 L288.0,202.2 L340.0,225.0 L392.0,249.7 L444.0,272.6 L496.0,300.8 L548.0,335.6 L600.0,420.0" fill="none" stroke="#1f77b4" stroke-width="2.2"/>
+<circle cx="80.0" cy="109.5" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="132.0" cy="132.2" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="184.0" cy="155.6" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="236.0" cy="178.6" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="288.0" cy="202.2" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="340.0" cy="225.0" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="392.0" cy="249.7" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="444.0" cy="272.6" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="496.0" cy="300.8" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="548.0" cy="335.6" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<circle cx="600.0" cy="420.0" r="3.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1"/>
+<path d="M80.0,106.5 L132.0,128.5 L184.0,151.4 L236.0,174.4 L288.0,197.8 L340.0,221.4 L392.0,245.5 L444.0,270.9 L496.0,299.0 L548.0,335.6 L600.0,420.0" fill="none" stroke="#aec7e8" stroke-width="2.2"/>
+<circle cx="80.0" cy="106.5" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="132.0" cy="128.5" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="184.0" cy="151.4" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="236.0" cy="174.4" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="288.0" cy="197.8" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="340.0" cy="221.4" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="392.0" cy="245.5" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="444.0" cy="270.9" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="496.0" cy="299.0" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="548.0" cy="335.6" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<circle cx="600.0" cy="420.0" r="3.5" fill="#aec7e8" stroke="#ffffff" stroke-width="1"/>
+<path d="M80.0,117.0 L132.0,139.0 L184.0,169.4 L236.0,190.6 L288.0,219.1 L340.0,236.4 L392.0,270.7 L444.0,274.5 L496.0,304.7 L548.0,335.6 L600.0,420.0" fill="none" stroke="#2ca02c" stroke-width="2.2"/>
+<circle cx="80.0" cy="117.0" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="132.0" cy="139.0" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="184.0" cy="169.4" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="236.0" cy="190.6" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="288.0" cy="219.1" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="340.0" cy="236.4" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="392.0" cy="270.7" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="444.0" cy="274.5" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="496.0" cy="304.7" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="548.0" cy="335.6" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<circle cx="600.0" cy="420.0" r="3.5" fill="#2ca02c" stroke="#ffffff" stroke-width="1"/>
+<path d="M80.0,92.3 L132.0,117.2 L184.0,139.1 L236.0,162.5 L288.0,186.5 L340.0,211.3 L392.0,238.1 L444.0,257.4 L496.0,285.6 L548.0,322.1 L600.0,420.0" fill="none" stroke="#98df8a" stroke-width="2.2"/>
+<circle cx="80.0" cy="92.3" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="132.0" cy="117.2" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="184.0" cy="139.1" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="236.0" cy="162.5" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="288.0" cy="186.5" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="340.0" cy="211.3" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="392.0" cy="238.1" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="444.0" cy="257.4" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="496.0" cy="285.6" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="548.0" cy="322.1" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<circle cx="600.0" cy="420.0" r="3.5" fill="#98df8a" stroke="#ffffff" stroke-width="1"/>
+<path d="M80.0,120.4 L132.0,148.4 L184.0,183.3 L236.0,201.6 L288.0,238.3 L340.0,246.2 L392.0,292.8 L444.0,275.7 L496.0,302.3 L548.0,337.5 L600.0,420.0" fill="none" stroke="#d62728" stroke-width="2.2"/>
+<circle cx="80.0" cy="120.4" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="132.0" cy="148.4" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="184.0" cy="183.3" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="236.0" cy="201.6" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="288.0" cy="238.3" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="340.0" cy="246.2" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="392.0" cy="292.8" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="444.0" cy="275.7" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="496.0" cy="302.3" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="548.0" cy="337.5" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<circle cx="600.0" cy="420.0" r="3.5" fill="#d62728" stroke="#ffffff" stroke-width="1"/>
+<path d="M80.0,92.3 L132.0,123.4 L184.0,138.1 L236.0,164.4 L288.0,195.8 L340.0,228.2 L392.0,243.9 L444.0,257.4 L496.0,282.0 L548.0,317.0 L600.0,420.0" fill="none" stroke="#ff9896" stroke-width="2.2"/>
+<circle cx="80.0" cy="92.3" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="132.0" cy="123.4" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="184.0" cy="138.1" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="236.0" cy="164.4" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="288.0" cy="195.8" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="340.0" cy="228.2" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="392.0" cy="243.9" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="444.0" cy="257.4" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="496.0" cy="282.0" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="548.0" cy="317.0" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<circle cx="600.0" cy="420.0" r="3.5" fill="#ff9896" stroke="#ffffff" stroke-width="1"/>
+<rect x="610" y="55" width="165" height="147" fill="#f6f8fa" stroke="#d0d7de" rx="4"/>
+<text x="615" y="68" font-weight="bold" font-size="10" fill="#24292f">Metrics Legend</text>
+<rect x="615" y="79" width="12" height="12" fill="#1f77b4" rx="2"/>
+<text x="633" y="89" font-size="9.5" fill="#24292f">RMS Err Z (rad * 4096)</text>
+<rect x="615" y="99" width="12" height="12" fill="#aec7e8" rx="2"/>
+<text x="633" y="109" font-size="9.5" fill="#24292f">Max Err Z (rad * 4096)</text>
+<rect x="615" y="119" width="12" height="12" fill="#2ca02c" rx="2"/>
+<text x="633" y="129" font-size="9.5" fill="#24292f">Conv RMS Err X (Q12)</text>
+<rect x="615" y="139" width="12" height="12" fill="#98df8a" rx="2"/>
+<text x="633" y="149" font-size="9.5" fill="#24292f">Conv Max Err X (Q12)</text>
+<rect x="615" y="159" width="12" height="12" fill="#d62728" rx="2"/>
+<text x="633" y="169" font-size="9.5" fill="#24292f">Conv RMS Err Y (Q12)</text>
+<rect x="615" y="179" width="12" height="12" fill="#ff9896" rx="2"/>
+<text x="633" y="189" font-size="9.5" fill="#24292f">Conv Max Err Y (Q12)</text>
+</svg>

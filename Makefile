@@ -284,6 +284,13 @@ pr:
 	@echo "  Routed DEF:      $(OUTPUT_DIR)/cordic_top_routed.def"
 	@echo "  Routed netlist:  $(OUTPUT_DIR)/cordic_top_routed.v"
 
+.PHONY: images
+images:
+	@echo "=== Generating Place & Route and Netlist PNG Images ==="
+	@mkdir -p $(OUTPUT_DIR)
+	bash $(SCRIPTS_DIR)/generate_images.sh
+	@echo "=== Image Generation Complete ==="
+
 .PHONY: drc
 drc:
 	@echo "=== Running Magic DRC + GDSII export (Sky130 HD) ==="
