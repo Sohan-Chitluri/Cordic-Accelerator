@@ -90,14 +90,14 @@ module adaptive_mixed_mode_tb;
 
     @(posedge clk);
     while (!ready_out) @(posedge clk);
-    injection_cycle = $time / 10;
+    injection_cycle = int'($time / 10);
     $display("Transaction injected at cycle: %0d", injection_cycle);
 
     @(negedge clk);
     valid_in = 1'b0; config_valid = 1'b0;
 
     while (!valid_out) @(posedge clk);
-    output_cycle = $time / 10;
+    output_cycle = int'($time / 10);
     latency = output_cycle - injection_cycle;
     $display("Transaction valid_out at cycle: %0d (Measured Latency: %0d cycles)", output_cycle, latency);
 
@@ -277,7 +277,7 @@ module adaptive_mixed_mode_tb;
       begin
         while (tx_recv < 32) begin
           @(negedge clk);
-          ready_in = $urandom_range(0, 1);
+          ready_in = 1'($urandom_range(0, 1));
           @(posedge clk);
           if (valid_out && ready_in) begin
             recv_x[tx_recv] = x_out;
