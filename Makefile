@@ -185,6 +185,31 @@ test-unit-cordic_top:
 .PHONY: test-unit
 test-unit: test-unit-fp_add_sub test-unit-cordic_lut test-unit-cordic_stage test-unit-cordic_pipeline test-unit-cordic_top
 
+.PHONY: test-adaptive-equiv
+test-adaptive-equiv:
+	@echo "=== Phase 1 Regression: 11-Mode Bit-Exact Equivalence vs Fixed-N ==="
+	@mkdir -p $(OUTPUT_DIR)
+	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module adaptive_equiv_tb \
+		$(RTL_SOURCES) \
+		$(TB_DIR)/adaptive_equiv_tb.sv \
+		-o $(ABS_OUTPUT)/Vadaptive_equiv_tb
+	$(ABS_OUTPUT)/Vadaptive_equiv_tb
+
+.PHONY: test-adaptive-mixed
+test-adaptive-mixed:
+	@echo "=== Phase 1 Regression: Mixed-Mode, Backpressure & Latency ==="
+	@mkdir -p $(OUTPUT_DIR)
+	$(VERILATOR) $(SIM_FLAGS) \
+		--top-module adaptive_mixed_mode_tb \
+		$(RTL_SOURCES) \
+		$(TB_DIR)/adaptive_mixed_mode_tb.sv \
+		-o $(ABS_OUTPUT)/Vadaptive_mixed_mode_tb
+	$(ABS_OUTPUT)/Vadaptive_mixed_mode_tb
+
+.PHONY: test-adaptive
+test-adaptive: test-adaptive-equiv test-adaptive-mixed
+
 # -----------------------------------------------------------------------------
 # REGRESSION TEST
 # -----------------------------------------------------------------------------
