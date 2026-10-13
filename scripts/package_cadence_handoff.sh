@@ -33,7 +33,8 @@ tar --exclude='.git' \
     rtl \
     constraints \
     cadence \
-    Makefile
+    Makefile \
+    PHASE1_IMPLEMENTATION_REPORT.md
 
 CHECKSUM=$(sha256sum "${ARCHIVE_PATH}" | awk '{print $1}')
 echo "Archive created successfully!"
