@@ -36,9 +36,9 @@ set_input_delay -clock clk -min 0.5 [get_ports ready_in]
 # -----------------------------------------------------------------------------
 # OUTPUT DELAYS (relative to clk)
 # -----------------------------------------------------------------------------
-# Data outputs
-set_output_delay -clock clk -max 3.0 [get_ports {x_out y_out z_out valid_out overflow irq}]
-set_output_delay -clock clk -min 0.5 [get_ports {x_out y_out z_out valid_out overflow irq}]
+# Data & status outputs
+set_output_delay -clock clk -max 3.0 [get_ports {x_out y_out z_out valid_out overflow irq status_mode_clamped_sticky}]
+set_output_delay -clock clk -min 0.5 [get_ports {x_out y_out z_out valid_out overflow irq status_mode_clamped_sticky}]
 
 # Ready output
 set_output_delay -clock clk -max 2.0 [get_ports ready_out]
