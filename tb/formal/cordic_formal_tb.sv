@@ -132,6 +132,9 @@ module cordic_formal_tb #(
   ) dut (
     .clk      (clk),
     .rst_n    (rst_n),
+    .active_x (1'b1),
+    .active_y (1'b1),
+    .active_z (1'b1),
     .x_in     (x_in),
     .y_in     (y_in),
     .z_in     (z_in),

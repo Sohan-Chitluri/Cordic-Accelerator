@@ -38,7 +38,7 @@ YOSYS           := yosys
 # bundles OpenSTA) now also builds, since this project's STA flow already
 # depends on it directly and it's a much smaller build. See
 # docs/PLACE_ROUTE_DRC.md. Built via tools/build_opensta.sh.
-OPENSTA         := tools/OpenSTA/build/sta
+OPENSTA         := $(shell command -v sta 2>/dev/null || echo tools/OpenSTA/build/sta)
 OPENROAD        := openroad
 
 # Simulation

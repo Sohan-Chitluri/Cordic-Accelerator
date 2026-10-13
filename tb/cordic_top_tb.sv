@@ -11,54 +11,36 @@
 
 import cordic_pkg::*;
 
-// Known vector 1: 45° rotation
-// Expected values computed from golden_model.py CordicGoldenModel
-// z_out=29 (residual angle ~0.007 rad after 8 iterations)
+// Known vector 1: 45° rotation (11 iterations)
+// Expected values computed from golden_model.py CordicGoldenModel(iterations=11)
 localparam cordic_data_t V1_X   = 16'sd4096, V1_Y = 16'sd0,    V1_Z = 16'sd3217;
-localparam cordic_data_t V1_EX  = 16'sd2918, V1_EY = 16'sd2876, V1_EZ = 16'sd29;
+localparam cordic_data_t V1_EX  = 16'sd2898, V1_EY = 16'sd2896, V1_EZ = 16'sd1;
 localparam logic         V1_EOVF = 1'b0;
 
-// Known vector 2: 0° rotation (z=0, convergence residual stays in x/y)
-// Expected values computed from golden_model.py CordicGoldenModel
-// z_out=-30 (residual angle ~-0.007 rad after 8 iterations from z=0)
+// Known vector 2: 0° rotation (11 iterations)
+// Expected values computed from golden_model.py CordicGoldenModel(iterations=11)
 localparam cordic_data_t V2_X   = 16'sd4096, V2_Y = 16'sd0,   V2_Z = 16'sd0;
-localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd29, V2_EZ = -16'sd30;
+localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd1,  V2_EZ = -16'sd2;
 localparam logic         V2_EOVF = 1'b0;
 
 // Saturation test vector: tests pipeline with large but valid inputs.
-// Note: cordic_stage_tb tests stage 0 directly without K-prescaling, but
-// cordic_pipeline applies K-prescale (×0.607) first, so these inputs do NOT
-// cause overflow after prescaling (18223+3037 < 32767). Golden model confirms overflow=0.
 localparam cordic_data_t VSAT_X = 16'sd30000, VSAT_Y = 16'sd5000, VSAT_Z = 16'sd100;
 localparam logic         VSAT_EOVF = 1'b0;  // No overflow after K-prescale
 
-// Config-attribution test vector: same input, admitted twice back-to-back
-// under DIFFERENT live cfg_saturate values while the first transaction is
-// still in flight. Chosen so saturate vs wrap modes diverge sharply (stage 0
-// overflows on x/y for this input), so the two resulting outputs can only
-// match if each transaction used its OWN admission-time config.
-// Expected values computed via tb/golden_model.py CordicGoldenModel
-// (saturate=True / saturate=False) for x=-20466, y=31176, z=-29053.
+// Config-attribution test vector (11 iterations)
+// Expected values computed via tb/golden_model.py CordicGoldenModel(iterations=11)
 localparam cordic_data_t CFG_X = -16'sd20466, CFG_Y = 16'sd31176, CFG_Z = -16'sd29053;
-localparam cordic_data_t CFG_SAT_EX  = 16'sd32767, CFG_SAT_EY  = 16'sd15120, CFG_SAT_EZ = -16'sd21945;
+localparam cordic_data_t CFG_SAT_EX  = 16'sd32767, CFG_SAT_EY  = 16'sd14896, CFG_SAT_EZ = -16'sd21917;
 localparam logic         CFG_SAT_EOVF = 1'b1;
-localparam cordic_data_t CFG_WRAP_EX = -16'sd31361, CFG_WRAP_EY = 16'sd18665, CFG_WRAP_EZ = -16'sd21945;
+localparam cordic_data_t CFG_WRAP_EX = -16'sd31233, CFG_WRAP_EY = 16'sd18880, CFG_WRAP_EZ = -16'sd21917;
 
-// Overflow-attribution test vector: guaranteed to overflow at stages 4-7
-// (including the final stage), so overflow=1 under both a last-stage-only
-// AND an OR-across-all-stages interpretation of the flag — avoiding any
-// dependency on which of those two interpretations is intended. Paired with
-// V1 (45 deg, never overflows at any stage, confirmed by hand-tracing
-// golden_model.py's per-stage internals) to check each transaction's
-// overflow flag is attributable to itself, not to a neighboring in-flight
-// transaction.
-// Expected values from tb/golden_model.py CordicGoldenModel(saturate=True).
+// Overflow-attribution test vector (11 iterations)
 localparam cordic_data_t OVF_X = -16'sd20466, OVF_Y = 16'sd31176, OVF_Z = -16'sd29053;
-localparam cordic_data_t OVF_EX = 16'sd32767, OVF_EY = 16'sd15120, OVF_EZ = -16'sd21945;
+localparam cordic_data_t OVF_EX = 16'sd32767, OVF_EY = 16'sd14896, OVF_EZ = -16'sd21917;
 localparam logic         OVF_EOVF = 1'b1;
 
-localparam int VALID_DEPTH = ITERATIONS + 2;  // 10
-localparam int TIMEOUT     = VALID_DEPTH + 6; // 16 — generous margin
+localparam int VALID_DEPTH = ITERATIONS + 1;  // 12 (ITERATIONS=11)
+localparam int TIMEOUT     = VALID_DEPTH + 6; // 18 — generous margin
 
 module cordic_top_tb;
 
@@ -89,7 +71,8 @@ module cordic_top_tb;
     .valid_out     (valid_out),
     .ready_in      (ready_in),
     .overflow      (overflow),
-    .irq           (irq)
+    .irq           (irq),
+    .status_mode_clamped_sticky()
   );
 
   initial clk = 1'b0;

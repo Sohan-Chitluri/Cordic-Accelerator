@@ -37,29 +37,14 @@
 module cordic_pipeline_tb;
   import cordic_pkg::*;
 
-  // Known vector 1: 45° rotation
+  // Known vector 1: 45° rotation (11 iterations)
   localparam cordic_data_t V1_X   = 16'sd4096, V1_Y = 16'sd0,    V1_Z = 16'sd3217;
-  localparam cordic_data_t V1_EX  = 16'sd2918, V1_EY = 16'sd2876, V1_EZ = 16'sd29;
+  localparam cordic_data_t V1_EX  = 16'sd2898, V1_EY = 16'sd2896, V1_EZ = 16'sd1;
   localparam logic         V1_EOVF = 1'b0;
 
-  // Known vector 2: 0° rotation (z=0, convergence residual stays in x/y)
-  // V2_EZ corrected from 23 to -30 (2026-09-28): this is a second, latent
-  // expected-value bug (independent of the V1_EZ mismatch above), caught
-  // when actually running this suite against the RTL for the first time
-  // during this repair. It was NOT flagged as a V1-style cross-file
-  // inconsistency (tb/cordic_top_tb.sv has the same wrong 23 for V2 and is
-  // out of this agent's ownership), so it went uncaught. -30 is confirmed
-  // two independent ways: (1) tb/golden_model.py's cordic_rotation(4096, 0,
-  // 0) run directly against these exact RTL parameters, and (2) an actual
-  // simulation run of this DUT before this fix (both report
-  // x_out=4097, y_out=29, z_out=-30). The x/y arithmetic datapath is
-  // untouched by this repair, so this was already wrong before this agent's
-  // changes and was simply never caught by simulation.
-  // Lead/verification agent: tb/cordic_top_tb.sv very likely needs the same
-  // z_out 23 -> -30 fix (identical DUT parameters, pure passthrough) — not
-  // edited here since that file is out of this agent's ownership.
+  // Known vector 2: 0° rotation (11 iterations)
   localparam cordic_data_t V2_X   = 16'sd4096, V2_Y = 16'sd0,   V2_Z = 16'sd0;
-  localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd29, V2_EZ = -16'sd30;
+  localparam cordic_data_t V2_EX  = 16'sd4097, V2_EY = 16'sd1,  V2_EZ = -16'sd2;
   localparam logic         V2_EOVF = 1'b0;
 
   // Pipeline latency: ITERATIONS stage registers + 1 cycle to land in the
@@ -97,7 +82,8 @@ module cordic_pipeline_tb;
     .valid_out     (valid_out),
     .ready_in      (ready_in),
     .overflow      (overflow),
-    .irq           (irq)
+    .irq           (irq),
+    .status_mode_clamped_sticky()
   );
 
   initial clk = 1'b0;

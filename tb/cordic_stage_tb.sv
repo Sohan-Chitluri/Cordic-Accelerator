@@ -60,6 +60,9 @@ module cordic_stage_tb;
   ) dut_0 (
     .clk      (clk),
     .rst_n    (rst_n),
+    .active_x (1'b1),
+    .active_y (1'b1),
+    .active_z (1'b1),
     .x_in     (x_in),
     .y_in     (y_in),
     .z_in     (z_in),
@@ -83,6 +86,9 @@ module cordic_stage_tb;
   ) dut_1 (
     .clk      (clk),
     .rst_n    (rst_n),
+    .active_x (1'b1),
+    .active_y (1'b1),
+    .active_z (1'b1),
     .x_in     (x_in),
     .y_in     (y_in),
     .z_in     (z_in),
@@ -247,6 +253,9 @@ module cordic_stage_tb;
       ) dut_chain (
         .clk      (clk),
         .rst_n    (rst_n),
+        .active_x (1'b1),
+        .active_y (1'b1),
+        .active_z (1'b1),
         .x_in     (chain_x[gi]),
         .y_in     (chain_y[gi]),
         .z_in     (chain_z[gi]),
