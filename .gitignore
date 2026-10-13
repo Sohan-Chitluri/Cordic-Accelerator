@@ -67,6 +67,7 @@ Thumbs.db
 build/
 dist/
 *.egg-info
+graphify-out/
 
 # Local toolchain / PDK — fetched via `nix develop` setup, not part of the repo
 # (see docs/PLACE_ROUTE_DRC.md for how to regenerate)
